@@ -2,7 +2,19 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Рисунки Углем</title>
+    
+    <!-- Предзагрузка ресурсов -->
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_1.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_2.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_3.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_4.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_5.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_6.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_7.png" as="image">
+    <link rel="preload" href="assets/drawings/setevinets_twinplyos_8.png" as="image">
+    
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     
@@ -24,7 +36,7 @@
             }
         });
 
-        // 2. Шейдер для эффекта дрожания
+        // 2. Исправленный шейдер для эффекта дрожания
         AFRAME.registerShader('noisy-contour', {
             schema: {
                 src: { type: 'map' },
@@ -45,7 +57,7 @@
                 varying vec2 vUV;
                 
                 float rand(vec2 n) { 
-                    return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453;
+                    return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
                 }
 
                 void main() {
@@ -68,10 +80,20 @@
             left: 0;
             width: 100%;
             padding: 15px;
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             text-align: center;
             font-family: Arial;
             z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        .loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #loadProgress {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
         }
         .point-info {
             position: fixed;
@@ -83,11 +105,19 @@
             font-size: 18px;
             text-shadow: 1px 1px 3px black;
             z-index: 999;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 90%;
+            margin: 0 auto;
         }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">Наведите камеру на маркер на столбе</div>
+    <div class="loading" id="loading">
+        <p>Наведите камеру на маркер на столбе</p>
+        <div id="loadProgress">Загрузка ресурсов...</div>
+    </div>
     <div class="point-info" id="pointInfo"></div>
 
     <a-scene 
@@ -156,7 +186,7 @@
                 fixed-on-marker
                 width="0.6" height="1.0"
                 position="0 0 0.01"
-                data-name="Рисунок 5"
+                data-name="Рисунок у Реки"
                 intensity="0.05"
             ></a-image>
         </a-marker>
@@ -209,7 +239,6 @@
         <img id="drawing6" src="assets/drawings/setevinets_twinplyos_6.png" crossorigin="anonymous" style="display: none;">
         <img id="drawing7" src="assets/drawings/setevinets_twinplyos_7.png" crossorigin="anonymous" style="display: none;">
         <img id="drawing8" src="assets/drawings/setevinets_twinplyos_8.png" crossorigin="anonymous" style="display: none;">
-    
 
         <a-entity camera></a-entity>
     </a-scene>
@@ -218,13 +247,37 @@
         // Управление интерфейсом
         const scene = document.querySelector('a-scene');
         const pointInfo = document.getElementById('pointInfo');
+        const loadingElement = document.getElementById('loading');
+        const loadProgress = document.getElementById('loadProgress');
         
+        // Отслеживание загрузки ресурсов
+        const images = document.querySelectorAll('img[id^="drawing"]');
+        let loadedCount = 0;
+        
+        images.forEach(img => {
+            img.onload = () => {
+                loadedCount++;
+                loadProgress.textContent = `Загружено ${loadedCount} из ${images.length} изображений`;
+                
+                if (loadedCount === images.length) {
+                    setTimeout(() => {
+                        loadingElement.classList.add('hidden');
+                    }, 500);
+                }
+            };
+            
+            img.onerror = () => {
+                console.error(`Ошибка загрузки изображения: ${img.src}`);
+                loadedCount++; // Учитываем даже при ошибке, чтобы не блокировать загрузку
+            };
+        });
+
         scene.addEventListener('loaded', function() {
-            document.getElementById('loading').style.display = 'none';
+            loadProgress.textContent = "Готово к работе!";
         });
 
         scene.addEventListener('markerFound', function(e) {
-            const name = e.target.getAttribute('data-name');
+            const name = e.target.querySelector('a-image').getAttribute('data-name');
             if (name) pointInfo.textContent = name;
         });
 
