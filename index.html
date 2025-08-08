@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Рисунки Углем</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <!-- Компоненты -->
+    <script>
+        // 1. Фиксация на плоскости маркера
+        AFRAME.registerComponent('fixed-on-marker', {
+            init: function() {
+                this.offset = new THREE.Vector3(0, 0, 0.01); // 1 см от плоскости
+            },
+            tick: function() {
+                if (!this.el.object3D.visible) return;
+                const marker = this.el.parentEl.object3D;
+                const position = new THREE.Vector3();
+                position.applyMatrix4(marker.matrixWorld);
+                this.el.object3D.position.copy(position);
+                this.el.object3D.position.add(this.offset);
+                this.el.object3D.quaternion.copy(marker.quaternion);
+            }
+        });
+
+        // 2. Шейдер для эффекта дрожания
+        AFRAME.registerShader('noisy-contour', {
+            schema: {
+                src: { type: 'map' },
+                time: { type: 'time', is: 'uniform' },
+                intensity: { default: 0.02 }
+            },
+            vertexShader: `
+                varying vec2 vUV;
+                void main() {
+                    vUV = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D src;
+                uniform float time;
+                uniform float intensity;
+                varying vec2 vUV;
+                
+                float rand(vec2 n) { 
+                    return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453;
+                }
+
+                void main() {
+                    vec2 uv = vUV;
+                    uv.x += (rand(vec2(time, uv.y)) - 0.5) * intensity;
+                    uv.y += (rand(vec2(time, uv.x)) - 0.5) * intensity * 0.7;
+                    
+                    vec4 color = texture2D(src, uv);
+                    if (color.a < 0.1) discard;
+                    gl_FragColor = color;
+                }
+            `
+        });
+    </script>
+    
+    <style>
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background: white;
+            text-align: center;
+            font-family: Arial;
+            z-index: 1000;
+        }
+        .point-info {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            text-shadow: 1px 1px 3px black;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">Наведите камеру на маркер на столбе</div>
+    <div class="point-info" id="pointInfo"></div>
+
+    <a-scene 
+        vr-mode-ui="enabled: false"
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false;"
+    >
+        <!-- ===== 8 АНИМИРОВАННЫХ РИСУНКОВ ===== -->
+        <!-- Маркер 1 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_1.patt">
+            <a-image
+                src="#drawing1"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.8" height="1.2"
+                position="0 0 0.01"
+                data-name="Рисунок у Леса"
+                intensity="0.03"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 2 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_2.patt">
+            <a-image
+                src="#drawing2"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок Дома Хозяйки"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 3 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_3.patt">
+            <a-image
+                src="#drawing3"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок Сада Бабы Люси"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 4 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_4.patt">
+            <a-image
+                src="#drawing4"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок у Крыльца"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 5 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_5.patt">
+            <a-image
+                src="#drawing5"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок 5"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 6 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_6.patt">
+            <a-image
+                src="#drawing6"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок у Дома Художника"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 7 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_7.patt">
+            <a-image
+                src="#drawing7"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок Землянки"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Маркер 8 -->
+        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_8.patt">
+            <a-image
+                src="#drawing8"
+                shader="noisy-contour"
+                fixed-on-marker
+                width="0.6" height="1.0"
+                position="0 0 0.01"
+                data-name="Рисунок Пепелища"
+                intensity="0.05"
+            ></a-image>
+        </a-marker>
+
+        <!-- Скрытые изображения -->
+        <img id="drawing1" src="assets/drawings/setevinets_twinplyos_1.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing2" src="assets/drawings/setevinets_twinplyos_2.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing3" src="assets/drawings/setevinets_twinplyos_3.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing4" src="assets/drawings/setevinets_twinplyos_4.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing5" src="assets/drawings/setevinets_twinplyos_5.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing6" src="assets/drawings/setevinets_twinplyos_6.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing7" src="assets/drawings/setevinets_twinplyos_7.png" crossorigin="anonymous" style="display: none;">
+        <img id="drawing8" src="assets/drawings/setevinets_twinplyos_8.png" crossorigin="anonymous" style="display: none;">
+    
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Управление интерфейсом
+        const scene = document.querySelector('a-scene');
+        const pointInfo = document.getElementById('pointInfo');
+        
+        scene.addEventListener('loaded', function() {
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        scene.addEventListener('markerFound', function(e) {
+            const name = e.target.getAttribute('data-name');
+            if (name) pointInfo.textContent = name;
+        });
+
+        scene.addEventListener('markerLost', function() {
+            pointInfo.textContent = '';
+        });
+    </script>
+</body>
+</html>
