@@ -2,9 +2,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Рисунки Углем</title>
-    
+    <title>index</title>
+
     <!-- Предзагрузка ресурсов -->
     <link rel="preload" href="assets/drawings/setevinets_twinplyos_1.png" as="image">
     <link rel="preload" href="assets/drawings/setevinets_twinplyos_2.png" as="image">
@@ -14,16 +13,19 @@
     <link rel="preload" href="assets/drawings/setevinets_twinplyos_6.png" as="image">
     <link rel="preload" href="assets/drawings/setevinets_twinplyos_7.png" as="image">
     <link rel="preload" href="assets/drawings/setevinets_twinplyos_8.png" as="image">
-    
+
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
+
     <!-- Компоненты -->
     <script>
-        // 1. Фиксация на плоскости маркера
-        AFRAME.registerComponent('fixed-on-marker', {
+        AFRAME.registerComponent('card-align', {
             init: function() {
-                this.offset = new THREE.Vector3(0, 0, 0.01); // 1 см от плоскости
+                this.drawingArea = {
+                    width: 0.105,
+                    height: 0.072,
+                    offset: new THREE.Vector3(-0.0525, 0.036, 0.01)
+                };
             },
             tick: function() {
                 if (!this.el.object3D.visible) return;
@@ -31,32 +33,31 @@
                 const position = new THREE.Vector3();
                 position.applyMatrix4(marker.matrixWorld);
                 this.el.object3D.position.copy(position);
-                this.el.object3D.position.add(this.offset);
+                this.el.object3D.position.add(this.drawingArea.offset);
                 this.el.object3D.quaternion.copy(marker.quaternion);
             }
         });
 
-        // 2. Исправленный шейдер для эффекта дрожания
         AFRAME.registerShader('noisy-contour', {
             schema: {
                 src: { type: 'map' },
                 time: { type: 'time', is: 'uniform' },
                 intensity: { default: 0.02 }
             },
-            vertexShader: `
+            vertexShader: \`
                 varying vec2 vUV;
                 void main() {
                     vUV = uv;
                     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                 }
-            `,
-            fragmentShader: `
+            \`,
+            fragmentShader: \`
                 uniform sampler2D src;
                 uniform float time;
                 uniform float intensity;
                 varying vec2 vUV;
-                
-                float rand(vec2 n) { 
+
+                float rand(vec2 n) {
                     return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
                 }
 
@@ -64,15 +65,15 @@
                     vec2 uv = vUV;
                     uv.x += (rand(vec2(time, uv.y)) - 0.5) * intensity;
                     uv.y += (rand(vec2(time, uv.x)) - 0.5) * intensity * 0.7;
-                    
+
                     vec4 color = texture2D(src, uv);
                     if (color.a < 0.1) discard;
                     gl_FragColor = color;
                 }
-            `
+            \`
         });
     </script>
-    
+
     <style>
         .loading {
             position: fixed;
@@ -80,7 +81,7 @@
             left: 0;
             width: 100%;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
             text-align: center;
             font-family: Arial;
             z-index: 1000;
@@ -90,12 +91,7 @@
             opacity: 0;
             pointer-events: none;
         }
-        #loadProgress {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .point-info {
+        .card-info {
             position: fixed;
             bottom: 20px;
             left: 0;
@@ -104,186 +100,213 @@
             color: white;
             font-size: 18px;
             text-shadow: 1px 1px 3px black;
-            z-index: 999;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0,0,0,0.7);
             padding: 10px;
-            border-radius: 5px;
-            max-width: 90%;
-            margin: 0 auto;
+            z-index: 999;
         }
     </style>
 </head>
 <body>
     <div class="loading" id="loading">
-        <p>Наведите камеру на маркер на столбе</p>
-        <div id="loadProgress">Загрузка ресурсов...</div>
+        Наведите камеру на открытку<br>
+        <small>Используйте хорошее освещение</small>
     </div>
-    <div class="point-info" id="pointInfo"></div>
+    <div class="card-info" id="cardInfo"></div>
 
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded 
-        arjs="sourceType: webcam; debugUIEnabled: false;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        renderer="logarithmicDepthBuffer: true;"
     >
-        <!-- ===== 8 АНИМИРОВАННЫХ РИСУНКОВ ===== -->
-        <!-- Маркер 1 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_1.patt">
+        <!-- МАРКЕРЫ -->
+        <!-- Изменено: size="0.05" и добавлен material -->
+        
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-1.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 1"
+        >
             <a-image
                 src="#drawing1"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.8" height="1.2"
-                position="0 0 0.01"
-                data-name="Рисунок у Леса"
-                intensity="0.03"
+                card-align
+                width="0.105"
+                height="0.072"
+                intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 2 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_2.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-2.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 2"
+        >
             <a-image
                 src="#drawing2"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок Дома Хозяйки"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 3 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_3.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-3.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 3"
+        >
             <a-image
                 src="#drawing3"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок Сада Бабы Люси"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 4 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_4.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-4.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 4"
+        >
             <a-image
                 src="#drawing4"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок у Крыльца"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 5 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_5.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-5.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 5"
+        >
             <a-image
                 src="#drawing5"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок у Реки"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 6 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_6.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-6.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 6"
+        >
             <a-image
                 src="#drawing6"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок у Дома Художника"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 7 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_7.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-7.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 7"
+        >
             <a-image
                 src="#drawing7"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок Землянки"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
-        <!-- Маркер 8 -->
-        <a-marker type="pattern" url="assets/patterns/pattern-setevinets_twinplyos_8.patt">
+        <a-marker 
+            type="pattern" 
+            url="assets/patterns/pattern-index_sdxtp-8.patt"
+            size="0.05"
+            emitevents="true"
+            data-name="index 8"
+        >
             <a-image
                 src="#drawing8"
                 shader="noisy-contour"
-                fixed-on-marker
-                width="0.6" height="1.0"
-                position="0 0 0.01"
-                data-name="Рисунок Пепелища"
+                card-align
+                width="0.105"
+                height="0.072"
                 intensity="0.05"
+                material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
-
-        <!-- Скрытые изображения -->
-        <img id="drawing1" src="assets/drawings/setevinets_twinplyos_1.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing2" src="assets/drawings/setevinets_twinplyos_2.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing3" src="assets/drawings/setevinets_twinplyos_3.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing4" src="assets/drawings/setevinets_twinplyos_4.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing5" src="assets/drawings/setevinets_twinplyos_5.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing6" src="assets/drawings/setevinets_twinplyos_6.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing7" src="assets/drawings/setevinets_twinplyos_7.png" crossorigin="anonymous" style="display: none;">
-        <img id="drawing8" src="assets/drawings/setevinets_twinplyos_8.png" crossorigin="anonymous" style="display: none;">
-
+<img id="drawing1" src="assets/drawings/setevinets_twinplyos_1.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing2" src="assets/drawings/setevinets_twinplyos_2.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing3" src="assets/drawings/setevinets_twinplyos_3.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing4" src="assets/drawings/setevinets_twinplyos_4.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing5" src="assets/drawings/setevinets_twinplyos_5.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing6" src="assets/drawings/setevinets_twinplyos_6.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing7" src="assets/drawings/setevinets_twinplyos_7.png" crossorigin="anonymous" style="display: none;">
+<img id="drawing8" src="assets/drawings/setevinets_twinplyos_8.png" crossorigin="anonymous" style="display: none;">
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        // Управление интерфейсом
         const scene = document.querySelector('a-scene');
-        const pointInfo = document.getElementById('pointInfo');
-        const loadingElement = document.getElementById('loading');
-        const loadProgress = document.getElementById('loadProgress');
-        
-        // Отслеживание загрузки ресурсов
+        const cardInfo = document.getElementById('cardInfo');
+        const loading = document.getElementById('loading');
+
         const images = document.querySelectorAll('img[id^="drawing"]');
         let loadedCount = 0;
-        
+
         images.forEach(img => {
             img.onload = () => {
                 loadedCount++;
-                loadProgress.textContent = `Загружено ${loadedCount} из ${images.length} изображений`;
-                
                 if (loadedCount === images.length) {
-                    setTimeout(() => {
-                        loadingElement.classList.add('hidden');
-                    }, 500);
+                    loading.classList.add('hidden');
                 }
             };
-            
-            img.onerror = () => {
-                console.error(`Ошибка загрузки изображения: ${img.src}`);
-                loadedCount++; // Учитываем даже при ошибке, чтобы не блокировать загрузку
-            };
-        });
-
-        scene.addEventListener('loaded', function() {
-            loadProgress.textContent = "Готово к работе!";
+            img.onerror = () => console.error(`Ошибка загрузки: ${img.src}`);
         });
 
         scene.addEventListener('markerFound', function(e) {
-            const name = e.target.querySelector('a-image').getAttribute('data-name');
-            if (name) pointInfo.textContent = name;
+            const name = e.target.getAttribute('data-name');
+            if (name) cardInfo.textContent = name;
         });
 
         scene.addEventListener('markerLost', function() {
-            pointInfo.textContent = '';
+            cardInfo.textContent = '';
         });
+
+        if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            document.querySelector('a-scene').setAttribute('arjs', 'sourceWidth: window.innerWidth; sourceHeight: window.innerHeight');
+        }
     </script>
 </body>
 </html>
+
