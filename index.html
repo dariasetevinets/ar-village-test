@@ -111,9 +111,15 @@
         </a-assets>
 
         <!-- Маркеры и изображения -->
+<a-entity geometry="primitive: plane; width: 0.05; height: 0.05" material="color: blue; opacity: 0.3; side: double" position="0 0 0.0002" rotation="-90 0 0" visible="true" class="debug-marker"></a-entity>
+<a-entity position="0 0 0.001">
+  <a-text value="X" position="0.03 0 0" color="blue" side="double" scale="0.5 0.5 0.5"></a-text>
+  <a-text value="Y" position="0 0.03 0" color="green" side="double" scale="0.5 0.5 0.5" rotation="0 0 90"></a-text>
+  <a-text value="Z" position="0 0 0.03" color="red" side="double" scale="0.5 0.5 0.5" rotation="90 0 0"></a-text>
+</a-entity>
         <a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" size="0.05" emitevents="true" data-name="index 1">
-            <a-image$1material="opacity: 0; $2"$3></a-image>
-        </a-marker>
+    <a-image src="#drawing1" position="-0.105 0.074 0.001" rotation="-90 0 0" width="0.21" height="0.148" material="transparent: true; alphaTest: 0.1;"></a-image>
+</a-marker>
         <a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt" size="0.05" emitevents="true" data-name="index 2">
             <a-image src="#drawing2" card-align width="0.105" height="0.072" material="transparent: true; alphaTest: 0.1; side: front"></a-image>
         </a-marker>
@@ -135,6 +141,7 @@
         <a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-8.patt" size="0.05" emitevents="true" data-name="index 8">
             <a-image src="#drawing8" card-align width="0.105" height="0.072" material="transparent: true; alphaTest: 0.1; side: front"></a-image>
         </a-marker>
+        <a-entity geometry="primitive: plane; width: 0.21; height: 0.148" material="color: red; opacity: 0.2; side: double" position="-0.105 0.074 0.0005" rotation="-90 0 0" visible="true" class="debug-frame"></a-entity>
         <!-- ... -->
 
         <a-entity geometry="primitive: plane; width: 0.105; height: 0.072" material="color: red; opacity: 0.3; side: double" position="-0.0215 0.069 0.001" visible="false" class="debug-frame"></a-entity>
@@ -222,5 +229,3 @@ scene.addEventListener('markerLost', function(e) {
     </script>
 </body>
 </html>
-
-
