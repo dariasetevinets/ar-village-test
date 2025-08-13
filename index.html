@@ -23,36 +23,28 @@
         // Компонент для точного позиционирования на открытке A5
         AFRAME.registerComponent('card-align', {
             init: function() {
-                // Параметры открытки A5 (148x210mm)
-                this.cardSize = {
-                    width: 0.148,  // 148mm в метрах
-                    height: 0.210  // 210mm в метрах
-                };
-                
-                // Область для рисунка (105x72mm в левой половине)
-                this.drawingArea = {
+                // Размер области рисунка (105x72mm)
+                this.drawingSize = {
                     width: 0.105,
-                    height: 0.072,
-                    offsetX: -0.0215,  // Смещение влево от центра
-                    offsetY: 0.069     // Смещение вверх от центра
+                    height: 0.072
                 };
+                // Смещение относительно центра маркера
+                this.offset = new THREE.Vector3(-0.0525, 0.036, 0.01);
             },
             tick: function() {
                 if (!this.el.object3D.visible) return;
-                
+        
                 const marker = this.el.parentEl.object3D;
                 const position = new THREE.Vector3();
                 position.setFromMatrixPosition(marker.matrixWorld);
-                
-                // Корректировка позиции относительно маркера
-                position.x += this.drawingArea.offsetX;
-                position.y += this.drawingArea.offsetY;
-                position.z += 0.001;  // Небольшой отступ
-                
+                position.add(this.offset);
+        
                 this.el.object3D.position.copy(position);
                 this.el.object3D.quaternion.setFromRotationMatrix(marker.matrixWorld);
+                this.el.object3D.rotation.x = -Math.PI/2; // Поворот для 2D изображения
             }
         });
+
     </script>
 
     <style>
@@ -108,7 +100,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
-            size="0.148" <!-- Полная высота открытки A5 -->
+            size="0.05"
             emitevents="true"
             data-name="index 1"
         >
@@ -117,7 +109,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -125,7 +117,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 2"
         >
@@ -134,7 +126,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -142,7 +134,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-3.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 3"
         >
@@ -151,7 +143,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -159,7 +151,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-4.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 4"
         >
@@ -168,7 +160,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -176,7 +168,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-5.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 5"
         >
@@ -185,7 +177,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -193,7 +185,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-6.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 6"
         >
@@ -202,7 +194,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -210,7 +202,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-7.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 7"
         >
@@ -219,7 +211,7 @@
                 card-align
                 width="0.105"
                 height="0.072"
-                material="transparent: true; alphaTest: 0.5"
+                material="transparent: true; alphaTest: 0.1; side: front"
             ></a-image>
         </a-marker>
 
@@ -227,7 +219,7 @@
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-8.patt"
-            size="0.148"
+            size="0.05"
             emitevents="true"
             data-name="index 8"
         >
@@ -292,10 +284,22 @@
             }
         });
 
-        scene.addEventListener('markerLost', function() {
-            cardInfo.textContent = '';
-            // Скрыть отладочную рамку
-            document.querySelector('.debug-frame').setAttribute('visible', 'false');
+            
+        // отладочная рамка
+        scene.addEventListener('markerFound', (e) => {
+            const marker = e.target;
+            console.log('Маркер найден:', marker.getAttribute('data-name'));
+            console.log('Дочерние элементы:', marker.children.length);
+                
+            const img = marker.querySelector('a-image');
+            if (img) {
+                console.log('Изображение:', {
+                    src: img.getAttribute('src'),
+                    visible: img.object3D.visible,
+                    position: img.object3D.position,
+                    rotation: img.object3D.rotation
+                });
+            }
         });
 
         // Автоматическая настройка для мобильных
@@ -309,3 +313,4 @@
     </script>
 </body>
 </html>
+
