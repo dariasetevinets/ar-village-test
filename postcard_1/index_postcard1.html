@@ -15,25 +15,29 @@
     const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";
 
     // mm-align: локальные координаты ОТНОСИТЕЛЬНО маркера (центр маркера = 0,0,0)
+    // Надёжный вариант: обновляем GEOMETRY напрямую
     AFRAME.registerComponent('mm-align', {
       schema: {
-        w:{type:'number',default:2800},  // мм — ширина рисунка
-        h:{type:'number',default:5200},  // мм — высота рисунка
-        x:{type:'number',default:-2500}, // мм — влево(−)/вправо(+)
-        y:{type:'number',default:700},   // мм — вверх(+)/вниз(−)
-        z:{type:'number',default:0.5},    // мм — к камере
-        orientation:{type:'string',default:'flat'} // 'upright' | 'flat'
+        w:{type:'number',default:160},  // мм – ширина рисунка
+        h:{type:'number',default:130},  // мм – высота рисунка
+        x:{type:'number',default:-175}, // мм – влево(−)/вправо(+)
+        y:{type:'number',default:35},   // мм – вверх(+)/вниз(−)
+        z:{type:'number',default:1},    // мм – к камере
+        orientation:{type:'string',default:'upright'}, // 'upright' | 'flat'
+        rotZ:{type:'number',default:90} // поворот в плоскости (градусы)
       },
-      update: function(){
-        const mm = 0.01;
-        const d = this.data;
-        // размер (если у примитива есть width/height)
-        if (this.el.getAttribute('width')  !== null) this.el.setAttribute('width',  d.w*mm);
-        if (this.el.getAttribute('height') !== null) this.el.setAttribute('height', d.h*mm);
-        // позиция — ЛОКАЛЬНО относительно маркера
+      init(){ this._apply=this._apply.bind(this); this.el.addEventListener('loaded',this._apply); },
+      remove(){ this.el.removeEventListener('loaded',this._apply); },
+      update(){ this._apply(); },
+      _apply(){
+        const mm=0.001, d=this.data;
+        const W = d.w*mm, H = d.h*mm;
+        // критично: менять именно geometry, а не width/height
+        this.el.setAttribute('geometry', {primitive:'plane', width: W, height: H});
         this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
-        // ориентация плоскости
-        this.el.setAttribute('rotation', d.orientation === 'flat' ? '-90 0 0' : '0 0 0');
+        const base = (d.orientation==='flat') ? [-90,0,0] : [0,0,0];
+        base[2] += d.rotZ;
+        this.el.setAttribute('rotation', base.join(' '));
       }
     });
   </script>
@@ -57,7 +61,7 @@
       <!-- сам AR-рисунок: плоскость с текстурой -->
       <a-plane id="ar-plane"
                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:2800; h:5200; x:-2500; y:700; z:0.5; orientation:flat"> // Перенос вершины в плоскость х
+               mm-align="w:1400; h:2600; x:-2500; y:700; z:0.5; orientation:flat"> // Перенос вершины в плоскость х
       </a-plane>
     </a-marker>
 
