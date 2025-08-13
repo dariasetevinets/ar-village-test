@@ -2,9 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Setevinets Daria x TwinPlyos</title>
-
-    <link rel="preload" href="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" as="image">
+    <title>Daria Setevinets x TwinPlyos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Предзагрузка ресурсов -->
+    <link rel="preload" href="assets/drawings/setevinets_index-1.png" as="image">
     <link rel="preload" href="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-2.png" as="image">
     <link rel="preload" href="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-3.png" as="image">
     <link rel="preload" href="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-4.png" as="image">
@@ -13,86 +16,9 @@
     <link rel="preload" href="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-7.png" as="image">
     <link rel="preload" href="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-8.png" as="image">
 
+
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta http-equiv="Cache-Control" content="no-cache">
-    
-    <script>
-        if (navigator.mediaDevices === undefined) {
-            navigator.mediaDevices = {};
-        }
-        if (navigator.mediaDevices.getUserMedia === undefined) {
-            navigator.mediaDevices.getUserMedia = function(constraints) {
-                return new Promise((resolve, reject) => {
-                    const getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                    if (!getUserMedia) {
-                    reject(new Error('getUserMedia is not implemented in this browser'));
-                    return;
-                    }
-                    getUserMedia.call(navigator, constraints, resolve, reject);
-                });
-            };
-        }
-    </script>
-
-    <!-- Компоненты -->
-    <script>
-        AFRAME.registerComponent('card-align', {
-            init: function() {
-                this.drawingArea = {
-                    width: 0.105,
-                    height: 0.072,
-                    offset: new THREE.Vector3(-0.0525, 0.036, 0.01)
-                };
-            },
-            tick: function() {
-                if (!this.el.object3D.visible) return;
-                const marker = this.el.parentEl.object3D;
-                const position = new THREE.Vector3();
-                position.applyMatrix4(marker.matrixWorld);
-                this.el.object3D.position.copy(position);
-                this.el.object3D.position.add(this.drawingArea.offset);
-                this.el.object3D.quaternion.copy(marker.quaternion);
-            }
-        });
-
-        AFRAME.registerShader('noisy-contour', {
-            schema: {
-                src: { type: 'map' },
-                time: { type: 'time', is: 'uniform' },
-                intensity: { default: 0.02 }
-            },
-            vertexShader: \`
-                varying vec2 vUV;
-                void main() {
-                    vUV = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            \`,
-            fragmentShader: \`
-                uniform sampler2D src;
-                uniform float time;
-                uniform float intensity;
-                varying vec2 vUV;
-
-                float rand(vec2 n) {
-                    return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
-                }
-
-                void main() {
-                    vec2 uv = vUV;
-                    uv.x += (rand(vec2(time, uv.y)) - 0.5) * intensity;
-                    uv.y += (rand(vec2(time, uv.x)) - 0.5) * intensity * 0.7;
-
-                    vec4 color = texture2D(src, uv);
-                    if (color.a < 0.1) discard;
-                    gl_FragColor = color;
-                }
-            \`
-        });
-    </script>
 
     <style>
         .loading {
@@ -100,7 +26,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            padding: 15px;
+            padding: 20px;
             background: rgba(255,255,255,0.9);
             text-align: center;
             font-family: Arial;
@@ -115,13 +41,12 @@
             position: fixed;
             bottom: 20px;
             left: 0;
-            width: 100%;
+            right: 0;
             text-align: center;
             color: white;
-            font-size: 18px;
-            text-shadow: 1px 1px 3px black;
             background: rgba(0,0,0,0.7);
-            padding: 10px;
+            padding: 15px;
+            font-size: 18px;
             z-index: 999;
         }
     </style>
@@ -129,30 +54,22 @@
 <body>
     <div class="loading" id="loading">
         Наведите камеру на открытку<br>
-        <small>Используйте хорошее освещение</small>
+        <small>Держите устройство ровно</small>
     </div>
     <div class="card-info" id="cardInfo"></div>
 
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
-        arjs="
-            sourceType: webcam;
-            debugUIEnabled: false;
-            detectionMode: mono_and_matrix;
-            matrixCodeType: 3x3;
-            sourceWidth: 1280;
-            sourceHeight: 720;
-        "
+        arjs="sourceType: webcam; 
+              debugUIEnabled: false;
+              detectionMode: mono_and_matrix;
+              matrixCodeType: 3x3;
+              sourceWidth: 1280;
+              sourceHeight: 720;"
         renderer="logarithmicDepthBuffer: true;"
-        gesture-detector
-        >
-    <!-- Ваши маркеры остаются без изменений -->
-</a-scene>
-    
-        <!-- МАРКЕРЫ -->
-        <!-- Изменено: size="0.05" и добавлен material -->
-        
+    >
+        <!-- Маркер 1 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
@@ -165,11 +82,13 @@
                 src="#drawing1"
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 2 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt"
@@ -180,31 +99,34 @@
         >
             <a-image
                 src="#drawing2"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 3 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-3.patt"
             size="0.05"
             emitevents="true"
             data-name="index 3"
+            preset="custom"
         >
             <a-image
                 src="#drawing3"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 4 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-4.patt"
@@ -215,14 +137,15 @@
         >
             <a-image
                 src="#drawing4"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 5 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-5.patt"
@@ -233,14 +156,15 @@
         >
             <a-image
                 src="#drawing5"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 6 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-6.patt"
@@ -251,14 +175,15 @@
         >
             <a-image
                 src="#drawing6"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 7 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-7.patt"
@@ -269,14 +194,15 @@
         >
             <a-image
                 src="#drawing7"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
 
+        <!-- Маркер 8 -->
         <a-marker 
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-8.patt"
@@ -287,14 +213,15 @@
         >
             <a-image
                 src="#drawing8"
-                card-align
                 width="0.105"
                 height="0.072"
-                position="-90 0 0"
+                position="0 0 0"
+                rotation="-90 0 0"
                 material="transparent: true; alphaTest: 0.5"
             ></a-image>
         </a-marker>
-    
+
+        <!-- Скрытые изображения -->
         <img id="drawing1" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous" style="display: none;">
         <img id="drawing2" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-2.png" crossorigin="anonymous" style="display: none;">
         <img id="drawing3" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-3.png" crossorigin="anonymous" style="display: none;">
@@ -303,18 +230,20 @@
         <img id="drawing6" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-6.png" crossorigin="anonymous" style="display: none;">
         <img id="drawing7" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-7.png" crossorigin="anonymous" style="display: none;">
         <img id="drawing8" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-8.png" crossorigin="anonymous" style="display: none;">
-        
+
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
+        // Управление интерфейсом
         const scene = document.querySelector('a-scene');
         const cardInfo = document.getElementById('cardInfo');
         const loading = document.getElementById('loading');
 
+        // Проверка загрузки изображений
         const images = document.querySelectorAll('img[id^="drawing"]');
         let loadedCount = 0;
-
+        
         images.forEach(img => {
             img.onload = () => {
                 loadedCount++;
@@ -325,6 +254,7 @@
             img.onerror = () => console.error(`Ошибка загрузки: ${img.src}`);
         });
 
+        // Обработка маркеров
         scene.addEventListener('markerFound', function(e) {
             const name = e.target.getAttribute('data-name');
             if (name) cardInfo.textContent = name;
@@ -334,42 +264,17 @@
             cardInfo.textContent = '';
         });
 
+        // Автоматическая настройка для мобильных
         if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            document.querySelector('a-scene').setAttribute('arjs', 'sourceWidth: window.innerWidth; sourceHeight: window.innerHeight');
+            scene.setAttribute('arjs', {
+                sourceWidth: window.innerWidth,
+                sourceHeight: window.innerHeight
+            });
         }
-        // Обработка ошибок камеры
-        scene.addEventListener('arjs-video-error', (e) => {
-            const error = e.detail.error;
-            console.error('AR.js Camera Error:', error);
-            loading.innerHTML = `Ошибка доступа к камере:<br>${error}<br>
-                <button onclick="window.location.reload()">Попробовать снова</button>`;
-        });
-        
-        // Проверка поддержки
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            loading.innerHTML = `Ваш браузер не поддерживает AR.<br>
-                Попробуйте Chrome или Firefox на Android/iOS`;
-        }
-        // Проверка загрузки маркеров
-        const patterns = [
-            'sdxtp-1.patt',
-            'sdxtp-2.patt',
-            'sdxtp-3.patt',
-            'sdxtp-4.patt',
-            'sdxtp-5.patt',
-            'sdxtp-6.patt',
-            'sdxtp-7.patt',
-            'sdxtp-8.patt',
-        ];
-        patterns.forEach(pattern => {
-            fetch(`assets/patterns/${pattern}`)
-                .then(r => console.log(`${pattern}: ${r.ok ? 'OK' : 'Ошибка'}`))
-                .catch(e => console.error(`${pattern}: ${e}`));
-        });
     </script>
-    
 </body>
 </html>
+
 
 
 
