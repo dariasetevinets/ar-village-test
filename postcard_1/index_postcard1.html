@@ -1,48 +1,83 @@
-<!-- /postcard_1/index_postcard1.html -->
+<!-- postcard_1/index_postcard1.html -->
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Postcard 1 · A5 · marker bottom-right · UPRIGHT</title>
+  <title>Postcard 1 · A5 · marker bottom-right · Local-plane align</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>body{margin:0;overflow:hidden}</style>
+
   <script>
-    // Подставь свои пути при необходимости:
+    // === настройки под твой кейс ===
     const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png";
     const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";
+    // маркер печатается 50×50 мм => size 0.05 м
+    const MARKER_SIZE_M = 0.05;
 
-    // mm-align: размеры/позиция в МИЛЛИМЕТРАХ от центра маркера (правый нижний угол открытки).
-    // orientation:
-    //  - 'upright' — открытка держится перед камерой (параллельно ей)
-    //  - 'flat'    — открытка лежит на столе
-    AFRAME.registerComponent('mm-align',{
-      schema:{
-        w:{type:'number',default:160}, h:{type:'number',default:130},
-        x:{type:'number',default:-175}, y:{type:'number',default:35},
-        z:{type:'number',default:1},
-        orientation:{type:'string',default:'upright'} // << ключевой параметр
+    // Компонент: ПРИВЯЗКА В ММ к плоскости маркера (локальные оси маркера: right/up/normal)
+    // w,h — размер плоскости; x,y — смещение в плоскости открытки; z — над плоскостью.
+    // mode:
+    //   - 'upright' (открытка параллельна камере) — плоскость строго совпадает с ориентацией маркера
+    //   - 'flat'    (на столе) — плоскость совпадает так же, просто ориентация маркера другая в реале
+    AFRAME.registerComponent('card-align-mm', {
+      schema: {
+        w:{type:'number',default:160},  // мм
+        h:{type:'number',default:130},  // мм
+        x:{type:'number',default:-175}, // мм (влево — отрицательно)
+        y:{type:'number',default:35},   // мм (вверх — положительно)
+        z:{type:'number',default:1},    // мм (к камере)
+        mode:{type:'string',default:'upright'} // 'upright' | 'flat'
       },
-      init(){ this._apply=this._apply.bind(this); this.el.addEventListener('loaded',this._apply); },
-      remove(){ this.el.removeEventListener('loaded',this._apply); },
-      update(){ this._apply(); },
-      _apply(){
-        const mm=0.001, p=this.data;
-        // ширина/высота (для plane/image)
-        if(this.el.getAttribute('width')!==null){ this.el.setAttribute('width', p.w*mm); }
-        if(this.el.getAttribute('height')!==null){ this.el.setAttribute('height', p.h*mm); }
-        // позиция
-        this.el.setAttribute('position', `${p.x*mm} ${p.y*mm} ${p.z*mm}`);
-        // ориентация плоскости
-        const rot = (p.orientation === 'flat') ? '-90 0 0' : '0 0 0';
-        this.el.setAttribute('rotation', rot);
-      }
-    });
+      init(){
+        this._q = new THREE.Quaternion();
+        this._origin = new THREE.Vector3();
+        this._right  = new THREE.Vector3();
+        this._up     = new THREE.Vector3();
+        this._norm   = new THREE.Vector3();
+        this._world  = new THREE.Vector3();
+        this._mm = 0.001;
 
-    window.addEventListener('load',()=>{
-      document.getElementById('drawing1').setAttribute('src', DRAWING_URL);
-      document.getElementById('marker').setAttribute('url', PATT_URL);
+        // назначим физический размер для plane/image
+        const d=this.data, mm=this._mm;
+        if (this.el.getAttribute('width') !== null)  this.el.setAttribute('width',  d.w*mm);
+        if (this.el.getAttribute('height')!== null)  this.el.setAttribute('height', d.h*mm);
+      },
+      tick(){
+        const parent = this.el.parentEl;        // a-marker
+        if (!parent) return;
+        const p3d = parent.object3D;
+
+        // центр маркера в мире
+        this._origin.setFromMatrixPosition(p3d.matrixWorld);
+
+        // кватернион маркера (ориентация)
+        p3d.getWorldQuaternion(this._q);
+
+        // базисные локальные оси маркера в мировых координатах
+        this._right.set(1,0,0).applyQuaternion(this._q).normalize(); // локальный +X
+        this._up.set(0,1,0).applyQuaternion(this._q).normalize();    // локальный +Y (вверх по открытке)
+        this._norm.set(0,0,1).applyQuaternion(this._q).normalize();  // локальный +Z (нормаль к открытке)
+
+        // оффсеты в метрах
+        const d=this.data, mm=this._mm;
+        const dx = d.x*mm, dy = d.y*mm, dz = d.z*mm;
+
+        // world = origin + right*dx + up*dy + norm*dz
+        this._world.copy(this._origin)
+          .add(this._right.multiplyScalar(dx))
+          .add(this._up.multiplyScalar(dy))
+          .add(this._norm.multiplyScalar(dz));
+
+        // применяем позицию в МИРЕ и ориентацию маркера (плоскость совпадает с открыткой)
+        this.el.object3D.position.copy(this._world);
+        this.el.object3D.quaternion.copy(this._q);
+
+        // ОБНОВЛЯЕМ РАЗМЕР (если ты правишь w/h по ходу)
+        if (this.el.getAttribute('width') !== null)  this.el.setAttribute('width',  d.w*mm);
+        if (this.el.getAttribute('height')!== null)  this.el.setAttribute('height', d.h*mm);
+      }
     });
   </script>
 </head>
@@ -51,30 +86,29 @@
            arjs="sourceType: webcam; debugUIEnabled:false;"
            renderer="logarithmicDepthBuffer:true;">
     <a-assets timeout="20000">
-      <img id="drawing1" crossorigin="anonymous">
+      <img id="drawing1" crossorigin="anonymous" src="">
     </a-assets>
 
     <!-- size ДОЛЖЕН совпадать с реальным печатным размером маркера (0.05 = 50 мм) -->
-    <a-marker id="marker" type="pattern" size="0.05" emitevents="true">
-
-      <!-- Сам AR-рисунок: используем plane с текстурой -->
+    <a-marker id="marker" type="pattern" size="0.05" emitevents="true" url="">
+      <!-- Сам AR-слой: a-plane + текстура -->
       <a-plane id="ar-plane"
                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:160; h:130; x:-175; y:35; z:1; orientation: upright">
-      </a-plane>
-
-      <!-- (опционально) Контур A5 для проверки геометрии, можно скрыть/удалить -->
-      <a-plane position="-0.105 0.074 0.0005"
-               width="0.21" height="0.148"
-               rotation="0 0 0"        <!-- открытка держится вертикально → без -90 -->
-               material="color:#00ffff; opacity:0.08; side:double">
+               card-align-mm="w:160; h:130; x:-175; y:35; z:1; mode: upright">
       </a-plane>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
+
+  <script>
+    // подставим ссылки
+    document.getElementById('drawing1').setAttribute('src', DRAWING_URL);
+    document.getElementById('marker').setAttribute('url', PATT_URL);
+  </script>
 </body>
 </html>
+
 
 
 
