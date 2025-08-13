@@ -3,126 +3,45 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>AR-открытка · A5 + AR.js · postcard_1</title>
+  <title>AR‑открытка · A5 + AR.js · postcard_1</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 
-  <!-- A-Frame + AR.js (стабильные версии) -->
+  <!-- Минимальный и стабильный стек -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
-  <style>
-    html,body{margin:0;height:100%;overflow:hidden;background:#000}
-    /* Появляется ТОЛЬКО если камера не стартовала сама */
-    #camFail{position:fixed;right:10px;bottom:10px;z-index:9;display:none;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.65);color:#fff;font:600 13px/1 system-ui,Segoe UI,Roboto}
-    #camFail.show{display:block}
-  </style>
-
-  <script>
-    // ========= Константы проекта =========
-    const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png"; // AR-изображение
-    const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";          // Маркер на печатной открытке
-
-    // Геометрия открытки 1 (жёстко, без калибровки):
-    // A5 горизонтально: 210×148 мм; маркер 50 мм.
-    // Центр маркера: 35 мм от правого и 35 мм от нижнего края.
-    const CARD_W = 210, CARD_H = 148;    // мм
-    const MARKER_MM = 50;                // мм (черный квадрат)
-    const DX_RIGHT = 35, DY_BOTTOM = 35; // мм
-
-    // Смещения относительно центра маркера (мм → метры применяем в компоненте)
-    const OFFSET_X = DX_RIGHT - CARD_W/2;   // -70 мм
-    const OFFSET_Y = CARD_H/2 - DY_BOTTOM;  // 39 мм
-
-    function mm(v){ return v*0.001; }
-
-    // ========= Компоненты =========
-    // mm-align: позиционирование и поворот в системе маркера, вход — мм
-    AFRAME.registerComponent('mm-align', {
-      schema: { w:{type:'number'}, h:{type:'number'}, x:{type:'number'}, y:{type:'number'}, z:{type:'number',default:1}, rotZ:{type:'number',default:90} },
-      update(){
-        const mm=0.001, d=this.data;
-        this.el.setAttribute('geometry', {primitive:'plane', width:d.w*mm, height:d.h*mm});
-        this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
-        this.el.setAttribute('rotation', `0 0 ${d.rotZ}`); // почему: «верх» PNG должен идти вдоль +X
-      }
-    });
-  </script>
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
 </head>
 <body>
-  <button id="camFail" type="button" aria-live="polite" title="Если камера не включилась — нажмите">Запустить камеру</button>
-  <a-scene vr-mode-ui="enabled:false" embedded
-           arjs="sourceType: webcam; debugUIEnabled:false;">
+  <!-- Никаких оверлеев/кнопок — чистый запуск камеры -->
+  <a-scene embedded vr-mode-ui="enabled:false"
+           renderer="antialias:true; logarithmicDepthBuffer:true"
+           arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled:false;">
 
     <a-assets timeout="20000">
-      <img id="drawing" crossorigin="anonymous" src="">
+      <img id="drawing" crossorigin="anonymous"
+           src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png">
     </a-assets>
 
-    <!-- ВАЖНО: size = физический размер черного квадрата маркера (в метрах) -->
-    <a-marker id="marker" type="pattern" patternUrl="" size="0.05" emitevents="true">
+    <!-- Маркер: .patt из печати. size = физический размер чёрного квадрата (метры) -->
+    <a-marker type="pattern"
+              patternUrl="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
+              size="0.05">
+
+      <!-- AR‑плоскость: A5 (210×148 мм). Верх изображения вдоль +X (rotZ=90).  -->
+      <!-- Смещения от центра маркера: x = -70 мм, y = 39 мм → в метрах: -0.07 и 0.039.  -->
       <a-entity id="arPlane"
-                material="src:#drawing; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-                mm-align="w:210; h:148; x:-70; y:39; z:1; rotZ:90">
+                geometry="primitive: plane; width: 0.21; height: 0.148"
+                material="src:#drawing; transparent:true; side:double; shader:flat"
+                position="-0.07 0.039 0.001"
+                rotation="0 0 90">
       </a-entity>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
-
-  <script>
-    // Диагностика (в консоль) + привязка ресурсов
-    document.getElementById('drawing').setAttribute('src', DRAWING_URL);
-    (function(){
-      const scene = document.querySelector('a-scene');
-      const btn = document.getElementById('camFail');
-      let inited = false;
-
-      // Применяем конфигурацию
-      const marker = document.getElementById('marker');
-      const arPlane = document.getElementById('arPlane');
-      marker.setAttribute('patternUrl', PATT_URL);
-      marker.setAttribute('size', mm(MARKER_MM));
-      arPlane.setAttribute('mm-align', `w:${CARD_W}; h:${CARD_H}; x:${OFFSET_X}; y:${OFFSET_Y}; z:1; rotZ:90`);
-
-      function ensureVideoPlayable(){
-        const v = document.querySelector('video'); if(!v) return false;
-        try{ v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.muted=true; v.autoplay=true; v.playsInline=true; const p=v.play(); if(p&&p.catch) p.catch(()=>{});}catch(_){return false}
-        return true;
-      }
-      function restartAR(){ const ar=scene.getAttribute('arjs')||''; scene.setAttribute('arjs', ar); }
-      function toggleFail(show){ btn.classList.toggle('show', !!show); }
-
-      scene.addEventListener('camera-init', ()=>{ inited=true; toggleFail(false); console.log('[AR] camera-init'); ensureVideoPlayable(); });
-      scene.addEventListener('arjs-video-loaded', ()=>{ inited=true; toggleFail(false); console.log('[AR] video-loaded'); ensureVideoPlayable(); });
-      scene.addEventListener('camera-error', (e)=>{ console.warn('[AR] camera-error', e); toggleFail(true); });
-
-      btn.addEventListener('click', ()=>{ ensureVideoPlayable() || restartAR(); setTimeout(ensureVideoPlayable, 300); });
-
-      // Если за 1.2 сек камера не запустилась — показать кнопку
-      setTimeout(()=>{ if(!inited) toggleFail(true); }, 1200);
-    })();(){
-      const scene = document.querySelector('a-scene');
-      const btn = document.getElementById('camFail');
-      let inited = false;
-
-      function ensureVideoPlayable(){
-        const v = document.querySelector('video'); if(!v) return false;
-        try{ v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.muted=true; v.autoplay=true; v.playsInline=true; const p=v.play(); if(p&&p.catch) p.catch(()=>{});}catch(_){return false}
-        return true;
-      }
-      function restartAR(){ const ar=scene.getAttribute('arjs')||''; scene.setAttribute('arjs', ar); }
-      function toggleFail(show){ btn.classList.toggle('show', !!show); }
-
-      scene.addEventListener('camera-init', ()=>{ inited=true; toggleFail(false); console.log('[AR] camera-init'); ensureVideoPlayable(); });
-      scene.addEventListener('arjs-video-loaded', ()=>{ inited=true; toggleFail(false); console.log('[AR] video-loaded'); ensureVideoPlayable(); });
-      scene.addEventListener('camera-error', (e)=>{ console.warn('[AR] camera-error', e); toggleFail(true); });
-
-      btn.addEventListener('click', ()=>{ ensureVideoPlayable() || restartAR(); setTimeout(ensureVideoPlayable, 300); });
-
-      // Если за 1.2 сек камера не запустилась — показать кнопку
-      setTimeout(()=>{ if(!inited) toggleFail(true); }, 1200);
-    })();
-  </script>
 </body>
 </html>
+
 
 
 
