@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>AR-открытка с маркером</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Подключаем последние стабильные версии A-Frame и AR.js -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
@@ -13,27 +12,9 @@
             overflow: hidden;
             background: #000;
         }
-        .arjs-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-        }
     </style>
 </head>
 <body>
-    <!-- Индикатор загрузки -->
-    <div class="arjs-loader">
-        <div>Загрузка AR... Наведите камеру на маркер</div>
-    </div>
-
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
@@ -46,67 +27,48 @@
         renderer="logarithmicDepthBuffer: true; precision: high"
     >
         <a-assets>
-            <!-- Основное AR-изображение -->
             <img id="drawing" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
-            
-            <!-- Маркер для распознавания -->
-            <a-asset-item id="marker-patt" src="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"></a-asset-item>
         </a-assets>
 
-        <!-- Маркер с привязкой к паттерну -->
         <a-marker 
             type="pattern" 
             preset="custom"
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
-            size="0.05"  <!-- Физический размер маркера в метрах (50мм) -->
-            raycaster="objects: .clickable"
+            size="0.05"
             emitevents="true"
-            cursor="rayOrigin: mouse"
         >
             <a-plane
-                class="clickable"
-                geometry="primitive: plane; width: 0.21; height: 0.148" <!-- A5 в метрах -->
+                geometry="primitive: plane; width: 0.21; height: 0.148"
                 material="src: #drawing; transparent: true; alphaTest: 0.5"
                 position="0 0 0.001"
                 rotation="0 0 0"
             ></a-plane>
         </a-marker>
 
-        <!-- Камера с настройками для AR -->
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const scene = document.querySelector('a-scene');
-            const loader = document.querySelector('.arjs-loader');
-
-            // Скрываем лоадер после загрузки AR
-            scene.addEventListener('arjs-video-loaded', () => {
-                loader.style.display = 'none';
-                
-                // Автозапуск видео
+            
+            // Автозапуск видео
+            scene.addEventListener('loaded', () => {
                 const video = document.querySelector('video');
                 if (video) {
                     video.playsInline = true;
                     video.muted = true;
-                    video.play().catch(e => console.log('Автовоспроизведение видео:', e));
+                    video.play().catch(e => console.log('Video autoplay:', e));
                 }
             });
 
-            // Обработчики событий маркера
-            scene.addEventListener('markerFound', (e) => {
-                console.log('Маркер обнаружен!', e.detail.id);
+            // Отладка маркера
+            scene.addEventListener('markerFound', () => {
+                console.log('Маркер распознан!');
             });
-
-            scene.addEventListener('markerLost', (e) => {
+            
+            scene.addEventListener('markerLost', () => {
                 console.log('Маркер потерян');
-            });
-
-            // Обработка ошибок
-            scene.addEventListener('camera-error', (e) => {
-                console.error('Ошибка камеры:', e.detail.error);
-                loader.innerHTML = 'Ошибка доступа к камере. Пожалуйста, разрешите использование камеры';
             });
         });
     </script>
