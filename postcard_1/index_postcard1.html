@@ -22,7 +22,7 @@
         x:{type:'number',default:-175}, // мм — влево(−)/вправо(+)
         y:{type:'number',default:35},   // мм — вверх(+)/вниз(−)
         z:{type:'number',default:1},    // мм — к камере
-        orientation:{type:'string',default:'upright'}, // 'upright' | 'flat'
+        orientation:{type:'string',default:'flat'},
         rotZ:{type:'number',default:90} // поворот в плоскости (градусы), чтобы «верх» шёл вдоль X
       },
       init(){ this._apply=this._apply.bind(this); this.el.addEventListener('loaded',this._apply); },
@@ -34,7 +34,7 @@
         // Важно: обновлять geometry (а не width/height атрибуты)
         this.el.setAttribute('geometry', {primitive:'plane', width: W, height: H});
         this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
-        const base = (d.orientation==='flat') ? [-90,0,0] : [0,0,0];
+        const base = (d.orientation==='flat') ? [0,0,90] : [0,0,0];
         base[2] += d.rotZ;
         this.el.setAttribute('rotation', base.join(' '));
       }
@@ -52,7 +52,7 @@
     <!-- size ДОЛЖЕН совпадать с реальным печатным размером маркера (0.05 = 50 мм) -->
     <a-marker id="marker" type="pattern" size="0.05" emitevents="true" url="">
       <!-- (опционально) A5-подложка для визуальной проверки — можно убрать -->
-      <a-plane position="-0.105 0.074 0.0005"
+      <a-plane position="-0.105 0.074 90"
                width="0.21" height="0.148"
                rotation="0 0 0"
                material="color:#00ffff; opacity:0.08; side:double"></a-plane>
@@ -60,7 +60,7 @@
       <!-- AR-рисунок: плоскость с текстурой PNG -->
       <a-plane id="ar-plane"
                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:160; h:130; x:-175; y:35; z:1; orientation:upright; rotZ:90">
+               mm-align="w:160; h:130; x:-175; y:35; z:1; orientation:flat; rotZ:90">
       </a-plane>
     </a-marker>
 
