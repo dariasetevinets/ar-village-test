@@ -17,9 +17,9 @@
       schema: {
         w: { type: 'number', default: 90 },   // ширина картинки в мм
         h: { type: 'number', default: 140 },  // высота картинки в мм
-        x: { type: 'number', default: -90 },  // смещение по X от центра маркера в мм (влево отрицательное)
+        x: { type: 'number', default: -160 },  // смещение по X от центра маркера в мм (влево отрицательное)
         y: { type: 'number', default: 5 },    // смещение по Y от центра маркера в мм (вверх положительное)
-        z: { type: 'number', default: 1 }     // приподнять над плоскостью в мм
+        z: { type: 'number', default: 5 }     // приподнять над плоскостью в мм
       },
       update: function () {
         const m = this.data;
@@ -56,7 +56,7 @@
       <a-image
         src="#drawing1"
         material="transparent: true; alphaTest: 0.03;"
-        mm-align="w: 90; h: 140; x: -90; y: 5; z: 1">
+        mm-align="w: 90; h: 140; x: -160; y: 5; z: 5">
       </a-image>
     </a-marker>
 
