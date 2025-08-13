@@ -42,7 +42,7 @@
 </head>
 <body>
   <a-scene vr-mode-ui="enabled:false" embedded
-           arjs="sourceType: webcam; facingMode: environment; videoTexture: true; debugUIEnabled:false;">
+           arjs="sourceType: webcam; debugUIEnabled:false;">
 
     <a-assets timeout="20000">
       <img id="drawing" crossorigin="anonymous" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png">
@@ -63,13 +63,14 @@
     // Диагностика (в консоль)
     (function(){
       const scene = document.querySelector('a-scene');
-      scene.addEventListener('camera-init', ()=>console.log('[AR] camera-init'));
-      scene.addEventListener('arjs-video-loaded', ()=>console.log('[AR] video-loaded'));
+      scene.addEventListener('camera-init', ()=>{ console.log('[AR] camera-init'); const v=document.querySelector('video'); if(v){ try{ v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.muted=true; v.autoplay=true; v.playsInline=true; const p=v.play(); if(p&&p.catch) p.catch(()=>{});}catch(_){}} });
+      scene.addEventListener('arjs-video-loaded', ()=>{ console.log('[AR] video-loaded'); const v=document.querySelector('video'); if(v){ try{ v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.muted=true; v.autoplay=true; v.playsInline=true; const p=v.play(); if(p&&p.catch) p.catch(()=>{});}catch(_){}} );
       scene.addEventListener('camera-error', (e)=>console.warn('[AR] camera-error', e));
     })();
   </script>
 </body>
 </html>
+
 
 
 
