@@ -25,7 +25,7 @@
         orientation:{type:'string',default:'flat'} // 'upright' | 'flat'
       },
       update: function(){
-        const mm = 0.001;
+        const mm = 0.01;
         const d = this.data;
         // размер (если у примитива есть width/height)
         if (this.el.getAttribute('width')  !== null) this.el.setAttribute('width',  d.w*mm);
