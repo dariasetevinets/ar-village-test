@@ -8,44 +8,48 @@
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
   <script>
+
     AFRAME.registerComponent('postcard-align', {
       schema: {
         anchor: { type: 'string', default: 'bottom-right' }
       },
-      init: function () {
-        const width = parseFloat(this.el.getAttribute('width')) || 1;
-        const height = parseFloat(this.el.getAttribute('height')) || 1;
-        const anchor = this.data.anchor;
+      update: function () {
+        setTimeout(() => {
+          const width = parseFloat(this.el.getAttribute('width')) || 1;
+          const height = parseFloat(this.el.getAttribute('height')) || 1;
+          const anchor = this.data.anchor;
+          
+          const pos = { x: 0, y: 0 };
+          
+          switch (anchor) {
+            case 'bottom-right':
+              pos.x = -width / 2;
+              pos.y = height / 2;
+              break;
+            case 'bottom-left':
+              pos.x = width / 2;
+              pos.y = height / 2;
+              break;
+            case 'top-right':
+              pos.x = -width / 2;
+              pos.y = -height / 2;
+              break;
+            case 'top-left':
+              pos.x = width / 2;
+              pos.y = -height / 2;
+              break;
+            case 'center':
+            default:
+              pos.x = 0;
+              pos.y = 0;
+          }
 
-        const pos = { x: 0, y: 0 };
-
-        switch (anchor) {
-          case 'bottom-right':
-            pos.x = -width / 2;
-            pos.y = height / 2;
-            break;
-          case 'bottom-left':
-            pos.x = width / 2;
-            pos.y = height / 2;
-            break;
-          case 'top-right':
-            pos.x = -width / 2;
-            pos.y = -height / 2;
-            break;
-          case 'top-left':
-            pos.x = width / 2;
-            pos.y = -height / 2;
-            break;
-          case 'center':
-          default:
-            pos.x = 0;
-            pos.y = 0;
-        }
-
-        this.el.setAttribute('position', `${pos.x} ${pos.y} 0.01`);
+          this.el.setAttribute('position', `${pos.x} ${pos.y} 0.01`);
+        }, 0); // сдвиг на следующий event loop
       }
     });
   </script>
+
 </head>
 <body style="margin: 0; overflow: hidden">
   <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
