@@ -2,15 +2,30 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta charset="utf-8">
     <title>Daria Setevinets x TwinPlyos</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        .status {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-family: Arial;
+            z-index: 100;
+        }
+    </style>
 </head>
     <script>
         AFRAME.registerComponent('drawing1-align', {
@@ -44,37 +59,9 @@
         });
     </script>
     
-    <style>
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px;
-            background: rgba(255,255,255,0.9);
-            text-align: center;
-            font-family: Arial;
-            z-index: 1000;
-            transition: opacity 0.5s;
-        }
-        .loading.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .drawing1-info {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: white;
-            background: rgba(0,0,0,0.7);
-            padding: 15px;
-            font-size: 18px;
-            z-index: 999;
-        }
-    </style>
 <body>
+    <div class="status">Наведите камеру на маркер</div>
+    
     <a-scene
         vr-mode-ui="enabled: false"
         embedded
