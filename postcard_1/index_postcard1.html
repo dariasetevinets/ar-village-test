@@ -35,7 +35,6 @@
           this.el.setAttribute('height', p.h*mm);
         }
         this.el.setAttribute('position', `${p.x*mm} ${p.y*mm} ${p.z*mm}`);
-        this.el.setAttribute('rotation', '-90 90 -90');   // положить в плоскость открытки
       }
     });
 
@@ -144,9 +143,9 @@
       <!-- КАРТИНКА СВЕРХУ ОБЛАСТИ -->
       <a-image id="ar-image"
                src="#drawing1"
-               position="1.5 0.074 0.5"
+               position="0 0 0.1"
                width="0.21" height="1.48"
-               material="opacity:1; side:double"></a-image>
+               material="opacity:1;"></a-image>
     </a-marker>
 
     <a-entity camera></a-entity>
