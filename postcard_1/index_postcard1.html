@@ -1,4 +1,4 @@
-<!-- postcard_1/index_postcard1.html -->
+<!-- /postcard_1/index_postcard1.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,120 +9,148 @@
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>
     body{margin:0;overflow:hidden}
-    #status{position:fixed;left:0;right:0;bottom:0;padding:10px 12px;
-      font:14px/1.35 system-ui,Arial;color:#fff;background:rgba(0,0,0,.6);z-index:9}
-    #status.ok{background:rgba(0,128,0,.55)} #status.err{background:rgba(160,0,0,.7)}
+    #hud{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;flex-wrap:wrap;
+         align-items:center;justify-content:space-between;padding:10px 12px;
+         font:14px/1.35 system-ui,Arial;color:#fff;background:rgba(0,0,0,.6);z-index:9}
+    #msg{opacity:.9}
+    .btns button{margin:0 3px;padding:4px 8px}
   </style>
 
   <script>
-    // ВЫСТАВЬ свой URL на PNG, если другой:
+    // URLs — поменяй при необходимости
     const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png";
     const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";
 
-    // Компонент выравнивания в миллиметрах (от центра маркера)
+    // mm-align: позиция/размер в МИЛЛИМЕТРАХ относительно центра маркера.
     AFRAME.registerComponent('mm-align', {
       schema: { w:{type:'number',default:90}, h:{type:'number',default:140},
                 x:{type:'number',default:-90}, y:{type:'number',default:5}, z:{type:'number',default:1} },
-      update: function(){
+      init(){ this._apply = this._apply.bind(this); this.el.addEventListener('loaded', this._apply); },
+      remove(){ this.el.removeEventListener('loaded', this._apply); },
+      update(){ this._apply(); },
+      _apply(){
         const mm=0.001, p=this.data;
-        if(this.el.tagName==='A-IMAGE'){ // задаём физ. размер
-          this.el.setAttribute('width',  (p.w*mm).toFixed(6));
-          this.el.setAttribute('height', (p.h*mm).toFixed(6));
+        if (this.el.tagName === 'A-IMAGE') {           // задаём физический размер
+          this.el.setAttribute('width',  p.w*mm);
+          this.el.setAttribute('height', p.h*mm);
         }
-        this.el.setAttribute('position', `${(p.x*mm).toFixed(6)} ${(p.y*mm).toFixed(6)} ${(p.z*mm).toFixed(6)}`);
-        // поворот в плоскость открытки (XY)
-        const r=this.el.getAttribute('rotation')||{x:0,y:0,z:0};
-        this.el.setAttribute('rotation', `-90 ${r.y||0} ${r.z||0}`);
+        this.el.setAttribute('position', `${p.x*mm} ${p.y*mm} ${p.z*mm}`);
+        this.el.setAttribute('rotation', '-90 0 0');   // положить в плоскость открытки
       }
     });
 
-    // Если PNG не загрузится или будет полностью прозрачным — подменим на канвас
-    function makeFallbackCanvasTexture(){
-      const size=512, c=document.createElement('canvas'); c.width=c.height=size;
-      const ctx=c.getContext('2d');
-      // шахматка
-      for(let y=0;y<size;y+=64){for(let x=0;x<size;x+=64){
-        ctx.fillStyle=((x+y)/64)%2? '#bbb':'#eee'; ctx.fillRect(x,y,64,64);
-      }}
-      // надпись
-      ctx.fillStyle='#d00'; ctx.font='bold 40px Arial';
-      ctx.fillText('FALLBACK', 150, size/2);
+    // Fallback-текстура (если вдруг изображение окажется пустым)
+    function makeFallbackTexture(){
+      const s=512,c=document.createElement('canvas'); c.width=c.height=s;
+      const g=c.getContext('2d');
+      for(let y=0;y<s;y+=64)for(let x=0;x<s;x+=64){
+        g.fillStyle=((x+y)/64)%2?'#bbb':'#eee'; g.fillRect(x,y,64,64);
+      }
+      g.fillStyle='#d00'; g.font='bold 40px Arial'; g.fillText('FALLBACK',150,s/2);
       return c;
     }
 
     function isFullyTransparent(img){
       try{
-        const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
-        const ctx=c.getContext('2d'); ctx.drawImage(img,0,0);
-        const data=ctx.getImageData(0,0,c.width,c.height).data;
-        // быстрая выборка каждые 16 пикселей
+        const cnv=document.createElement('canvas'); cnv.width=img.naturalWidth; cnv.height=img.naturalHeight;
+        const ctx=cnv.getContext('2d'); ctx.drawImage(img,0,0);
+        const data=ctx.getImageData(0,0,cnv.width,cnv.height).data;
         for(let i=3;i<data.length;i+=4*16){ if(data[i]>0) return false; }
         return true;
-      }catch(e){ return false; } // в сомнении считаем «не прозрачным», чтобы не мешать
+      }catch(e){ return false; }
     }
 
-    window.addEventListener('load', () => {
-      const statusEl=document.getElementById('status');
-      const imgEl=document.getElementById('drawing1');
-      const marker=document.getElementById('marker');
+    // небольшая панель подгонки
+    function bindTweaks(aImage){
+      const hud = document.getElementById('hud');
+      const msg = document.getElementById('msg');
+      const get = () => AFRAME.utils.entity.getComponentProperty(aImage, 'mm-align');
+      const set = v => AFRAME.utils.entity.setComponentProperty(aImage, 'mm-align', v);
 
-      imgEl.addEventListener('load', ()=>{
-        if(isFullyTransparent(imgEl)){
-          statusEl.textContent='Внимание: PNG полностью прозрачный (альфа=0). Показана заглушка.';
-          statusEl.className='err';
-          const tex=makeFallbackCanvasTexture();
-          document.getElementById('ar-image').setAttribute('src', tex);
-        }else{
-          statusEl.textContent='OK: drawing1 загружен. Наведи камеру на правый нижний угол открытки.';
-          statusEl.className='ok';
+      function updText(v){ msg.textContent = `w:${v.w}mm  h:${v.h}mm  x:${v.x}mm  y:${v.y}mm`; }
+
+      const v = get(); updText(v);
+
+      hud.querySelectorAll('[data-delta]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const [key,delta] = btn.dataset.delta.split(':');
+          const val = parseFloat(delta);
+          const cur = get();
+          cur[key] = +(cur[key] + val).toFixed(2);
+          set(cur); updText(cur);
+        });
+      });
+    }
+
+    window.addEventListener('load', ()=>{
+      const status = document.getElementById('status');
+      const img    = document.getElementById('drawing1');
+      const marker = document.getElementById('marker');
+      const aImage = document.getElementById('ar-image');
+
+      img.addEventListener('load', ()=>{
+        if (isFullyTransparent(img)) {
+          status.textContent='PNG полностью прозрачный — показана заглушка';
+          status.style.background='rgba(160,0,0,.7)';
+          aImage.setAttribute('src', makeFallbackTexture());
+        } else {
+          status.textContent='OK: drawing1 загружен. Наведи на правый нижний угол.';
+          status.style.background='rgba(0,128,0,.55)';
         }
       });
-      imgEl.addEventListener('error', ()=>{
-        statusEl.textContent='Ошибка загрузки drawing1 (URL/CORS/404). Показана заглушка.';
-        statusEl.className='err';
-        const tex=makeFallbackCanvasTexture();
-        document.getElementById('ar-image').setAttribute('src', tex);
+      img.addEventListener('error', ()=>{
+        status.textContent='Ошибка загрузки PNG — показана заглушка';
+        status.style.background='rgba(160,0,0,.7)';
+        aImage.setAttribute('src', makeFallbackTexture());
       });
 
-      // проставляем URLы
-      imgEl.setAttribute('src', DRAWING_URL);
+      img.setAttribute('src', DRAWING_URL);
       marker.setAttribute('url', PATT_URL);
+
+      bindTweaks(aImage);
     });
   </script>
 </head>
 <body>
-  <div id="status">Загрузка…</div>
+  <div id="hud">
+    <span id="msg">—</span>
+    <span id="status">Загрузка…</span>
+    <span class="btns">
+      <button data-delta="x:-5">x−5мм</button><button data-delta="x:5">x+5мм</button>
+      <button data-delta="y:-5">y−5мм</button><button data-delta="y:5">y+5мм</button>
+      <button data-delta="w:-5">w−5мм</button><button data-delta="w:5">w+5мм</button>
+      <button data-delta="h:-5">h−5мм</button><button data-delta="h:5">h+5мм</button>
+    </span>
+  </div>
 
-  <a-scene
-    vr-mode-ui="enabled:false"
-    embedded
-    arjs="sourceType: webcam; debugUIEnabled: false;"
-    renderer="logarithmicDepthBuffer:true;"
-  >
+  <a-scene vr-mode-ui="enabled:false" embedded
+           arjs="sourceType: webcam; debugUIEnabled:false;"
+           renderer="logarithmicDepthBuffer:true;">
     <a-assets timeout="20000">
       <img id="drawing1" crossorigin="anonymous">
     </a-assets>
 
+    <!-- МАРКЕР: его центр — (0,0,0). Укажи точный размер печати 0.05 (50мм). -->
     <a-marker id="marker" type="pattern" size="0.05" emitevents="true">
-      <!-- Подложка A5 для контроля геометрии. Маркер = правый нижний угол -->
+      <!-- A5-подложка: правый нижний угол совпадает с маркером -->
       <a-plane position="-0.105 0.074 0.0005" rotation="-90 0 0"
                width="0.21" height="0.148"
                material="color:#00ffff; opacity:0.12; side:double"></a-plane>
 
-      <!-- Область, куда должен лечь drawing (розовая) -->
+      <!-- Целевая область (малиновая), где должна лежать картинка -->
       <a-plane mm-align="w:90; h:140; x:-90; y:5; z:0.7"
                material="color:#ff00ff; opacity:0.15; side:double"></a-plane>
 
-      <!-- САМА картинка -->
+      <!-- КАРТИНКА СВЕРХУ ОБЛАСТИ -->
       <a-image id="ar-image"
                src="#drawing1"
                mm-align="w:90; h:140; x:-90; y:5; z:1"
-               material="transparent:true; alphaTest:0; opacity:1; side:double">
-      </a-image>
+               material="opacity:1; side:double"></a-image>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
 </body>
 </html>
+
 
