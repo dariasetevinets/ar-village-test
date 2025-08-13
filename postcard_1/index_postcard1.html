@@ -19,10 +19,10 @@
       schema: {
         w:{type:'number',default:700},  // мм — ширина рисунка
         h:{type:'number',default:1300},  // мм — высота рисунка
-        x:{type:'number',default:-175}, // мм — влево(−)/вправо(+)
-        y:{type:'number',default:35},   // мм — вверх(+)/вниз(−)
-        z:{type:'number',default:0},    // мм — к камере
-        orientation:{type:'string',default:'upright'} // 'upright' | 'flat'
+        x:{type:'number',default:-2500}, // мм — влево(−)/вправо(+)
+        y:{type:'number',default:700},   // мм — вверх(+)/вниз(−)
+        z:{type:'number',default:0.5},    // мм — к камере
+        orientation:{type:'string',default:'flat'} // 'upright' | 'flat'
       },
       update: function(){
         const mm = 0.001;
