@@ -23,7 +23,7 @@
         x:{type:'number',default:-175}, // мм – влево(−)/вправо(+)
         y:{type:'number',default:35},   // мм – вверх(+)/вниз(−)
         z:{type:'number',default:1},    // мм – к камере
-        orientation:{type:'string',default:'upright'}, // 'upright' | 'flat'
+        orientation:{type:'string',default:'flat'}, // 'upright' | 'flat'
         rotZ:{type:'number',default:90} // поворот в плоскости (градусы)
       },
       init(){ this._apply=this._apply.bind(this); this.el.addEventListener('loaded',this._apply); },
@@ -61,7 +61,7 @@
       <!-- сам AR-рисунок: плоскость с текстурой -->
       <a-plane id="ar-plane"
                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:130; h:160; x:-2500; y:700; z:0.5; orientation:flat"> // Перенос вершины в плоскость х
+               mm-align="w:130; h:160; x:-2500; y:700; z:0.5; orientation:flat; rotZ:90"> // Перенос вершины в плоскость х
       </a-plane>
     </a-marker>
 
