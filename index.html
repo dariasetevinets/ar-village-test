@@ -21,24 +21,33 @@
 
     <script>
         AFRAME.registerComponent('card-align', {
-            init: function() {
-                this.drawingSize = {
-                    width: 0.105,
-                    height: 0.072
-                };
-                this.offset = new THREE.Vector3(-0.0525, 0.036, 0.01);
-            },
-            tick: function() {
-                if (!this.el.object3D.visible) return;
-                const marker = this.el.parentEl.object3D;
-                const position = new THREE.Vector3();
-                position.setFromMatrixPosition(marker.matrixWorld);
-                position.add(this.offset);
-                this.el.object3D.position.copy(position);
-                this.el.object3D.quaternion.setFromRotationMatrix(marker.matrixWorld);
-                this.el.object3D.rotation.x = -Math.PI/2;
-            }
-        });
+    init: function() {
+        this.drawingSize = {
+            width: 0.105,
+            height: 0.072
+        };
+        this.offset = new THREE.Vector3(-0.0525, 0.036, 0.01);
+    },
+    tick: function() {
+        const marker = this.el.parentEl?.object3D;
+        if (!marker || !this.el.object3D.visible) return;
+
+        const position = new THREE.Vector3();
+        position.setFromMatrixPosition(marker.matrixWorld);
+        position.add(this.offset);
+
+        // безопасно применяем позицию
+        this.el.object3D.position.copy(position);
+
+        // только если rotation не сбрасывается
+        const rotationMatrix = new THREE.Matrix4();
+        rotationMatrix.extractRotation(marker.matrixWorld);
+        this.el.object3D.setRotationFromMatrix(rotationMatrix);
+
+        // фикс угла для картинки
+        this.el.object3D.rotation.x -= Math.PI / 2;
+    }
+});
     </script>
 
     <style>
@@ -103,7 +112,7 @@
 
         <!-- Маркеры и изображения -->
         <a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" size="0.05" emitevents="true" data-name="index 1">
-            <a-image src="#drawing1" card-align width="0.105" height="0.072" material="transparent: true; alphaTest: 0.1; side: front"></a-image>
+            <a-image$1material="opacity: 0; $2"$3></a-image>
         </a-marker>
         <a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt" size="0.05" emitevents="true" data-name="index 2">
             <a-image src="#drawing2" card-align width="0.105" height="0.072" material="transparent: true; alphaTest: 0.1; side: front"></a-image>
@@ -151,6 +160,36 @@
         });
 
         scene.addEventListener('markerFound', function(e) {
+    const img = e.target.querySelector('a-image');
+    if (img) {
+        img.setAttribute('animation__fadein', {
+            property: 'material.opacity',
+            from: 0,
+            to: 1,
+            dur: 3000,
+            easing: 'easeOutQuad'
+        });
+    }
+    const name = e.target.getAttribute('data-name');
+    if (name) {
+        cardInfo.textContent = name;
+        document.querySelector('.debug-frame').setAttribute('visible', 'true');
+    }
+});
+
+scene.addEventListener('markerLost', function(e) {
+    const img = e.target.querySelector('a-image');
+    if (img) {
+        img.setAttribute('animation__fadeout', {
+            property: 'material.opacity',
+            from: 1,
+            to: 0,
+            dur: 1000,
+            easing: 'easeOutQuad'
+        });
+    }
+});
+            }
             const name = e.target.getAttribute('data-name');
             if (name) {
                 cardInfo.textContent = name;
@@ -183,3 +222,5 @@
     </script>
 </body>
 </html>
+
+
