@@ -17,8 +17,8 @@
     // mm-align: локальные координаты ОТНОСИТЕЛЬНО маркера (центр маркера = 0,0,0)
     AFRAME.registerComponent('mm-align', {
       schema: {
-        w:{type:'number',default:700},  // мм — ширина рисунка
-        h:{type:'number',default:1300},  // мм — высота рисунка
+        w:{type:'number',default:2800},  // мм — ширина рисунка
+        h:{type:'number',default:5200},  // мм — высота рисунка
         x:{type:'number',default:-2500}, // мм — влево(−)/вправо(+)
         y:{type:'number',default:700},   // мм — вверх(+)/вниз(−)
         z:{type:'number',default:0.5},    // мм — к камере
@@ -57,7 +57,7 @@
       <!-- сам AR-рисунок: плоскость с текстурой -->
       <a-plane id="ar-plane"
                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:1400; h:2600; x:-2500; y:700; z:0.5; orientation:flat"> // Перенос вершины в плоскость х
+               mm-align="w:2800; h:5200; x:-2500; y:700; z:0.5; orientation:flat"> // Перенос вершины в плоскость х
       </a-plane>
     </a-marker>
 
