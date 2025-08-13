@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>AR-открытка с маркером</title>
+    <title>AR открытка с маркером</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -12,53 +12,52 @@
             overflow: hidden;
             background: #000;
         }
-        .debug-info {
+        #status {
             position: fixed;
-            bottom: 10px;
-            left: 10px;
+            bottom: 20px;
+            left: 20px;
             color: white;
             font-family: Arial;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
             z-index: 100;
         }
     </style>
 </head>
 <body>
-    <div class="debug-info">Наведите камеру на маркер</div>
+    <div id="status">Инициализация AR...</div>
 
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
-        arjs="sourceType: webcam; 
+        arjs="sourceType: webcam;
               debugUIEnabled: true;
-              detectionMode: mono_and_matrix; 
+              detectionMode: mono_and_matrix;
               matrixCodeType: 3x3;
               maxDetectionRate: 60;
               cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat"
-        renderer="logarithmicDepthBuffer: true; precision: high"
     >
         <a-assets>
-            <img id="drawing" src="https://dariasetevinets.github.io/ar-village-test/postcard_1/Открытка 1/аArtboard 1.png" crossorigin="anonymous">
-            <a-asset-item id="markerPattern" src="https://dariasetevinets.github.io/ar-village-test/postcard_1/Открытка 1/sdxtp-1.patt"></a-asset-item>
+            <img id="card" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
         </a-assets>
 
         <!-- Основной маркер -->
         <a-marker 
-            id="mainMarker"
             type="pattern"
-            preset="custom"
-            url="#markerPattern"
+            url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
             size="0.05"
+            raycaster="objects: .clickable"
             emitevents="true"
-            smooth="true"
-            smoothCount="10"
-            smoothTolerance="0.01"
-            smoothThreshold="5"
+            cursor="rayOrigin: mouse"
         >
             <a-plane
-                geometry="primitive: plane; width: 0.21; height: 0.148"
-                material="src: #drawing; transparent: true; alphaTest: 0.01; opacity: 1.0"
-                position="0 0 0.001"
+                class="clickable"
+                position="0 0 0"
                 rotation="-90 0 0"
+                width="0.21"
+                height="0.148"
+                material="src: #card; transparent: true; alphaTest: 0.1"
             ></a-plane>
         </a-marker>
 
@@ -67,37 +66,56 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.getElementById('status');
             const scene = document.querySelector('a-scene');
-            const debugInfo = document.querySelector('.debug-info');
             
-            // Проверка загрузки маркера
-            scene.addEventListener('loaded', () => {
-                console.log('Сцена загружена');
-                const marker = document.querySelector('#mainMarker');
-                if (!marker) {
-                    console.error('Маркер не найден в DOM');
-                    return;
+            // Проверка доступности маркера
+            fetch("https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt")
+                .then(response => {
+                    if (!response.ok) {
+                        statusEl.textContent = "Ошибка: маркер не найден по указанному URL";
+                        throw new Error("Маркер не доступен");
+                    }
+                    return response.text();
+                })
+                .then(markerData => {
+                    if (markerData.length < 100) {
+                        statusEl.textContent = "Ошибка: файл маркера поврежден";
+                        throw new Error("Неверный формат маркера");
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка маркера:", error);
+                });
+
+            // События AR.js
+            scene.addEventListener('arjs-video-loaded', () => {
+                statusEl.textContent = "AR готов к работе. Наведите камеру на маркер";
+                
+                // Автозапуск видео
+                const video = document.querySelector('video');
+                if (video) {
+                    video.playsInline = true;
+                    video.muted = true;
+                    video.play().catch(e => console.log("Автовоспроизведение:", e));
                 }
-                
-                // Принудительная проверка маркера
-                marker.addEventListener('markerFound', () => {
-                    debugInfo.textContent = 'Маркер распознан!';
-                    console.log('Маркер найден');
-                });
-                
-                marker.addEventListener('markerLost', () => {
-                    debugInfo.textContent = 'Маркер потерян';
-                    console.log('Маркер потерян');
-                });
             });
 
-            // Автозапуск видео
-            const video = document.querySelector('video');
-            if (video) {
-                video.playsInline = true;
-                video.muted = true;
-                video.play().catch(e => console.log('Ошибка автовоспроизведения:', e));
-            }
+            // События маркера
+            scene.addEventListener('markerFound', (e) => {
+                statusEl.textContent = "Маркер распознан!";
+                console.log("Маркер найден:", e.detail.id);
+            });
+
+            scene.addEventListener('markerLost', (e) => {
+                statusEl.textContent = "Наведите камеру на маркер";
+                console.log("Маркер потерян");
+            });
+
+            scene.addEventListener('camera-error', (e) => {
+                statusEl.textContent = "Ошибка доступа к камере";
+                console.error("Ошибка камеры:", e.detail.error);
+            });
         });
     </script>
 </body>
