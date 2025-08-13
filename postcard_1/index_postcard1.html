@@ -6,15 +6,61 @@
   <title>AR-открытка · A5 + AR.js · postcard_1</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 
-  <!-- A-Frame + AR.js (зафиксируйте версии под прод) -->
+  <!-- A-Frame + AR.js (стабильные версии) -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
   <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
 
   <script>
-    // Справка по смещениям:
-    // x = 35 - 210/2 = -70 мм,  y = 148/2 - 35 = 39 мм
-    // Лёгкая диагностика: выводим ключевые события в консоль
+    // ========= Константы проекта =========
+    const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png"; // AR-изображение
+    const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";          // Маркер на печатной открытке
+
+    // Геометрия открытки 1 (жёстко, без калибровки):
+    // A5 горизонтально: 210×148 мм; маркер 50 мм.
+    // Центр маркера: 35 мм от правого и 35 мм от нижнего края.
+    const CARD_W = 210, CARD_H = 148;    // мм
+    const MARKER_MM = 50;                // мм (черный квадрат)
+    const DX_RIGHT = 35, DY_BOTTOM = 35; // мм
+
+    // Смещения относительно центра маркера (мм → метры применяем в компоненте)
+    const OFFSET_X = DX_RIGHT - CARD_W/2;   // -70 мм
+    const OFFSET_Y = CARD_H/2 - DY_BOTTOM;  // 39 мм
+
+    // ========= Компоненты =========
+    // mm-align: позиционирование и поворот в системе маркера, вход — мм
+    AFRAME.registerComponent('mm-align', {
+      schema: { w:{type:'number'}, h:{type:'number'}, x:{type:'number'}, y:{type:'number'}, z:{type:'number',default:1}, rotZ:{type:'number',default:90} },
+      update(){
+        const mm=0.001, d=this.data;
+        this.el.setAttribute('geometry', {primitive:'plane', width:d.w*mm, height:d.h*mm});
+        this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
+        this.el.setAttribute('rotation', `0 0 ${d.rotZ}`); // почему: «верх» PNG должен идти вдоль +X
+      }
+    });
+  </script>
+</head>
+<body>
+  <a-scene vr-mode-ui="enabled:false" embedded
+           arjs="sourceType: webcam; facingMode: environment; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; videoTexture: true; debugUIEnabled:false;">
+
+    <a-assets timeout="20000">
+      <img id="drawing" crossorigin="anonymous" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png">
+    </a-assets>
+
+    <!-- ВАЖНО: size = физический размер черного квадрата маркера (в метрах) -->
+    <a-marker type="pattern" patternUrl="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" size="0.05" emitevents="true">
+      <a-entity id="arPlane"
+                material="src:#drawing; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
+                mm-align="w:210; h:148; x:-70; y:39; z:1; rotZ:90">
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // Диагностика (в консоль)
     (function(){
       const scene = document.querySelector('a-scene');
       scene.addEventListener('camera-init', ()=>console.log('[AR] camera-init'));
