@@ -12,14 +12,24 @@
             overflow: hidden;
             background: #000;
         }
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
+    <div class="debug-info">Наведите камеру на маркер</div>
+
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
         arjs="sourceType: webcam; 
-              debugUIEnabled: false;
+              debugUIEnabled: true;
               detectionMode: mono_and_matrix; 
               matrixCodeType: 3x3;
               maxDetectionRate: 60;
@@ -28,20 +38,27 @@
     >
         <a-assets>
             <img id="drawing" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
+            <a-asset-item id="markerPattern" src="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"></a-asset-item>
         </a-assets>
 
+        <!-- Основной маркер -->
         <a-marker 
-            type="pattern" 
+            id="mainMarker"
+            type="pattern"
             preset="custom"
-            url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
+            url="#markerPattern"
             size="0.05"
             emitevents="true"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance="0.01"
+            smoothThreshold="5"
         >
             <a-plane
                 geometry="primitive: plane; width: 0.21; height: 0.148"
-                material="src: #drawing; transparent: true; alphaTest: 0.5"
+                material="src: #drawing; transparent: true; alphaTest: 0.01; opacity: 1.0"
                 position="0 0 0.001"
-                rotation="0 0 0"
+                rotation="-90 0 0"
             ></a-plane>
         </a-marker>
 
@@ -51,30 +68,40 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const scene = document.querySelector('a-scene');
+            const debugInfo = document.querySelector('.debug-info');
             
-            // Автозапуск видео
+            // Проверка загрузки маркера
             scene.addEventListener('loaded', () => {
-                const video = document.querySelector('video');
-                if (video) {
-                    video.playsInline = true;
-                    video.muted = true;
-                    video.play().catch(e => console.log('Video autoplay:', e));
+                console.log('Сцена загружена');
+                const marker = document.querySelector('#mainMarker');
+                if (!marker) {
+                    console.error('Маркер не найден в DOM');
+                    return;
                 }
+                
+                // Принудительная проверка маркера
+                marker.addEventListener('markerFound', () => {
+                    debugInfo.textContent = 'Маркер распознан!';
+                    console.log('Маркер найден');
+                });
+                
+                marker.addEventListener('markerLost', () => {
+                    debugInfo.textContent = 'Маркер потерян';
+                    console.log('Маркер потерян');
+                });
             });
 
-            // Отладка маркера
-            scene.addEventListener('markerFound', () => {
-                console.log('Маркер распознан!');
-            });
-            
-            scene.addEventListener('markerLost', () => {
-                console.log('Маркер потерян');
-            });
+            // Автозапуск видео
+            const video = document.querySelector('video');
+            if (video) {
+                video.playsInline = true;
+                video.muted = true;
+                video.play().catch(e => console.log('Ошибка автовоспроизведения:', e));
+            }
         });
     </script>
 </body>
 </html>
-
 
 
 
