@@ -29,7 +29,7 @@
       remove(){ this.el.removeEventListener('loaded',this._apply); },
       update(){ this._apply(); },
       _apply(){
-        const mm=0.001, d=this.data;
+        const mm=1, d=this.data;
         const W = d.w*mm, H = d.h*mm;
         // Важно: обновлять geometry (а не width/height атрибуты)
         this.el.setAttribute('geometry', {primitive:'plane', width: W, height: H});
@@ -50,7 +50,7 @@
     </a-assets>
 
     <!-- size ДОЛЖЕН совпадать с реальным печатным размером маркера (0.05 = 50 мм) -->
-    <a-marker id="marker" type="pattern" size="0.05" emitevents="true" url="">
+    <a-marker id="marker" type="pattern" size="1" emitevents="true" url="">
       <!-- (опционально) A5-подложка для визуальной проверки — можно убрать -->
       <a-plane position="-0.105 0.074 90"
                width="0.21" height="0.148"
