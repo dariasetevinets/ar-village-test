@@ -12,28 +12,9 @@
             overflow: hidden;
             background: #000;
         }
-        #cam-fail {
-            position: fixed;
-            right: 10px;
-            bottom: 10px;
-            z-index: 100;
-            display: none;
-            padding: 8px 12px;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            font-family: system-ui, sans-serif;
-            font-weight: 600;
-            font-size: 13px;
-        }
-        #cam-fail.show {
-            display: block;
-        }
     </style>
 </head>
 <body>
-    <button id="cam-fail" title="Нажмите, если камера не запустилась">Запустить камеру</button>
-
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
@@ -52,7 +33,7 @@
             type="pattern" 
             preset="custom"
             url="#marker-patt"
-            size="0.05"  <!-- Физический размер маркера в метрах (50мм) -->
+            size="0.05"
             emitevents="true"
             smooth="true"
             smoothCount="5"
@@ -60,7 +41,7 @@
             smoothThreshold="5"
         >
             <a-entity
-                geometry="primitive: plane; width: 0.21; height: 0.148" <!-- A5 в метрах -->
+                geometry="primitive: plane; width: 0.21; height: 0.148"
                 material="src: #drawing; transparent: true; alphaTest: 0.5"
                 position="0 0 0.001"
                 rotation="0 0 0"
@@ -73,55 +54,33 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const scene = document.querySelector('a-scene');
-            const camFailBtn = document.getElementById('cam-fail');
-            let arInitialized = false;
 
-            // Функция инициализации AR
+            // Автозапуск AR
             const initAR = () => {
                 try {
                     const video = document.querySelector('video');
                     if (video) {
                         video.playsInline = true;
                         video.muted = true;
-                        video.play().catch(e => console.log('Video play error:', e));
+                        video.play().catch(e => console.log('Video play:', e));
                     }
                 } catch (e) {
-                    console.error('AR initialization error:', e);
+                    console.log('AR init:', e);
                 }
             };
 
-            // Обработчики событий AR.js
             scene.addEventListener('arjs-video-loaded', () => {
-                arInitialized = true;
-                camFailBtn.classList.remove('show');
                 initAR();
-                console.log('AR система успешно инициализирована');
+                console.log('AR система активна');
             });
 
             scene.addEventListener('markerFound', (e) => {
-                console.log('Маркер обнаружен:', e.detail.id);
+                console.log('Маркер найден');
             });
 
             scene.addEventListener('markerLost', (e) => {
-                console.log('Маркер потерян:', e.detail.id);
+                console.log('Маркер скрыт');
             });
-
-            scene.addEventListener('camera-error', () => {
-                camFailBtn.classList.add('show');
-                console.error('Ошибка камеры');
-            });
-
-            // Ручной запуск камеры
-            camFailBtn.addEventListener('click', () => {
-                scene.setAttribute('arjs', scene.getAttribute('arjs'));
-            });
-
-            // Таймаут инициализации
-            setTimeout(() => {
-                if (!arInitialized) {
-                    camFailBtn.classList.add('show');
-                }
-            }, 1500);
         });
     </script>
 </body>
