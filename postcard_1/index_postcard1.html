@@ -1,42 +1,46 @@
 <!-- /postcard_1/index_postcard1.html -->
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <title>Postcard 1 · A5 · marker bottom-right (upright)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <!-- A-Frame + AR.js (pinned URLs recommended in production) -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>body{margin:0;overflow:hidden}</style>
 
   <script>
-    // Пути к ресурсам (замени при необходимости)
+    // Ресурсы (замени при необходимости)
     const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png";
     const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";
 
-    // mm-align: локальные координаты ОТ ЦЕНТРА МАРКЕРА (мм), управление GEOMETRY (в метрах)
+    // mm-align: позиционирование в миллиметрах ОТ ЦЕНТРА МАРКЕРА, геометрия в метрах
     AFRAME.registerComponent('mm-align', {
       schema: {
-        w:{type:'number',default:160},  // мм — ширина рисунка
-        h:{type:'number',default:130},  // мм — высота рисунка
-        x:{type:'number',default:-175}, // мм — влево(−)/вправо(+)
-        y:{type:'number',default:35},   // мм — вверх(+)/вниз(−)
-        z:{type:'number',default:1},    // мм — к камере
-        orientation:{type:'string',default:'flat'},
-        rotZ:{type:'number',default:90} // поворот в плоскости (градусы), чтобы «верх» шёл вдоль X
+        w:{type:'number',default:160},  // мм
+        h:{type:'number',default:130},  // мм
+        x:{type:'number',default:-175}, // мм: −влево/+вправо
+        y:{type:'number',default:35},   // мм: +вверх/−вниз
+        z:{type:'number',default:1},    // мм: высота над плоскостью
+        rotZ:{type:'number',default:90} // градусы: «верх» рисунка вдоль +X
       },
-      init(){ this._apply=this._apply.bind(this); this.el.addEventListener('loaded',this._apply); },
-      remove(){ this.el.removeEventListener('loaded',this._apply); },
+      init(){
+        this._apply = this._apply.bind(this);
+        this.el.addEventListener('loaded', this._apply);
+      },
+      remove(){ this.el.removeEventListener('loaded', this._apply); },
       update(){ this._apply(); },
       _apply(){
-        const mm=1, d=this.data;
-        const W = d.w*mm, H = d.h*mm;
-        // Важно: обновлять geometry (а не width/height атрибуты)
-        this.el.setAttribute('geometry', {primitive:'plane', width: W, height: H});
+        const mm = 0.001; // критично: перевод мм→м
+        const d = this.data;
+        const W = d.w * mm, H = d.h * mm;
+
+        // Управляем геометрией явно (без width/height атрибутов <a-plane>)
+        this.el.setAttribute('geometry', { primitive: 'plane', width: W, height: H });
         this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
-        const base = (d.orientation==='flat') ? [0,0,0] : [0,0,0];
-        base[2] += d.rotZ;
-        this.el.setAttribute('rotation', base.join(' '));
+        // Плоскость параллельна маркеру, поворот только в его плоскости
+        this.el.setAttribute('rotation', `0 0 ${d.rotZ}`);
       }
     });
   </script>
@@ -44,24 +48,25 @@
 <body>
   <a-scene vr-mode-ui="enabled:false" embedded
            arjs="sourceType: webcam; debugUIEnabled:false;"
-           renderer="logarithmicDepthBuffer:true;">
+           renderer="logarithmicDepthBuffer:true; antialias:true">
+
     <a-assets timeout="20000">
       <img id="drawing1" crossorigin="anonymous" src="">
     </a-assets>
 
-    <!-- size ДОЛЖЕН совпадать с реальным печатным размером маркера (0.05 = 50 мм) -->
-    <a-marker id="marker" type="pattern" size="1" emitevents="true" url="">
-      <!-- (опционально) A5-подложка для визуальной проверки — можно убрать -->
-      <a-plane position="0 0 0"
-               width="0.21" height="0.148"
-               rotation="0 0 90"
-               material="color:#00ffff; opacity:0.08; side:double"></a-plane>
+    <!-- ВАЖНО: size = физический размер напечатанного PATT (в метрах). 0.05 = 50 мм. -->
+    <a-marker id="marker" type="pattern" size="0.05" emitevents="true" patternUrl="">
+      <!-- A5-подложка для проверки. Z чуть ниже, чтобы не мерцала. -->
+      <a-entity geometry="primitive: plane; width: 0.21; height: 0.148"
+                position="0 0 -0.0001"
+                rotation="0 0 0"
+                material="color:#00ffff; opacity:0.08; side:double"></a-entity>
 
-      <!-- AR-рисунок: плоскость с текстурой PNG -->
-      <a-plane id="ar-plane"
-               material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:160; h:130; x:-175; y:35; z:1; orientation:flat; rotZ:90">
-      </a-plane>
+      <!-- AR-рисунок: PNG-текстура на плоскости, вершина вдоль оси X -->
+      <a-entity id="ar-plane"
+                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
+                mm-align="w:160; h:130; x:-175; y:35; z:1; rotZ:90">
+      </a-entity>
     </a-marker>
 
     <a-entity camera></a-entity>
@@ -70,13 +75,9 @@
   <script>
     // Подставляем ресурсы
     document.getElementById('drawing1').setAttribute('src', DRAWING_URL);
-    document.getElementById('marker').setAttribute('url', PATT_URL);
+    // Используем patternUrl, а не url
+    document.getElementById('marker').setAttribute('patternUrl', PATT_URL);
   </script>
 </body>
 </html>
-
-
-
-
-
 
