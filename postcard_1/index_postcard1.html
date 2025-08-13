@@ -3,81 +3,180 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Postcard 1 · A5 · marker bottom-right (upright)</title>
+  <title>AR-открытка · A5 + AR.js · sdxtp-1</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <!-- A-Frame + AR.js (pinned URLs recommended in production) -->
+
+  <!-- A-Frame + AR.js (prod: закрепите версии) -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  <style>body{margin:0;overflow:hidden}</style>
+  <style>
+    :root{--ui:12px}
+    html,body{margin:0;height:100%;overflow:hidden;background:#000}
+    #ui{position:fixed;left:8px;top:8px;z-index:10;font:500 var(--ui)/1.2 system-ui,Segoe UI,Roboto,Arial;color:#111}
+    #ui details{background:#fff;border-radius:10px;padding:10px 12px 12px;box-shadow:0 6px 24px rgba(0,0,0,.25);max-width:min(92vw,380px)}
+    #ui summary{cursor:pointer;outline:none}
+    #ui .row{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin:6px 0}
+    #ui input[type="number"]{width:100%;padding:6px;border:1px solid #ddd;border-radius:8px}
+    #ui .muted{opacity:.7}
+    #ui .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    #ui .btn{display:inline-block;padding:6px 10px;border-radius:8px;background:#111;color:#fff;text-decoration:none}
+    #toast{position:fixed;right:10px;bottom:10px;color:#fff;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:8px;z-index:10}
+  </style>
 
   <script>
-    // Ресурсы (замени при необходимости)
-    const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png";
-    const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";
+    // URLs ресурсов (при необходимости поменяйте на локальные)
+    const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png"; // AR-изображение (прозрачный PNG А5)
+    const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";          // Маркер, напечатан на открытке
 
-    // mm-align: позиционирование в миллиметрах ОТ ЦЕНТРА МАРКЕРА, геометрия в метрах
+    // Компонент перевода миллиметров → метры и поворота в плоскости маркера
     AFRAME.registerComponent('mm-align', {
       schema: {
-        w:{type:'number',default:160},  // мм
-        h:{type:'number',default:130},  // мм
-        x:{type:'number',default:-175}, // мм: −влево/+вправо
-        y:{type:'number',default:35},   // мм: +вверх/−вниз
-        z:{type:'number',default:1},    // мм: высота над плоскостью
-        rotZ:{type:'number',default:90} // градусы: «верх» рисунка вдоль +X
+        w:{type:'number',default:210},   // мм ширина плоскости
+        h:{type:'number',default:148},   // мм высота плоскости
+        x:{type:'number',default:0},     // мм смещение X от центра маркера
+        y:{type:'number',default:0},     // мм смещение Y от центра маркера
+        z:{type:'number',default:1},     // мм над плоскостью маркера
+        rotZ:{type:'number',default:90}  // ° поворот в плоскости (верх вдоль +X по умолчанию)
       },
-      init(){
-        this._apply = this._apply.bind(this);
-        this.el.addEventListener('loaded', this._apply);
-      },
-      remove(){ this.el.removeEventListener('loaded', this._apply); },
-      update(){ this._apply(); },
-      _apply(){
-        const mm = 0.001; // критично: перевод мм→м
+      update(){
+        const mm = 0.001;
         const d = this.data;
-        const W = d.w * mm, H = d.h * mm;
-
-        // Управляем геометрией явно (без width/height атрибутов <a-plane>)
-        this.el.setAttribute('geometry', { primitive: 'plane', width: W, height: H });
+        this.el.setAttribute('geometry', {primitive:'plane', width:d.w*mm, height:d.h*mm});
         this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
-        // Плоскость параллельна маркеру, поворот только в его плоскости
         this.el.setAttribute('rotation', `0 0 ${d.rotZ}`);
       }
     });
   </script>
 </head>
 <body>
+  <!-- Мини-панель для точной стыковки под печать -->
+  <div id="ui">
+    <details open>
+      <summary>⚙️ Калибровка (мм, физика печати)</summary>
+      <div class="row"><label>Ширина открытки (W)</label><input id="cardW" type="number" step="1" value="210"></div>
+      <div class="row"><label>Высота открытки (H)</label><input id="cardH" type="number" step="1" value="148"></div>
+      <div class="row"><label>Размер маркера (черный квадрат)</label><input id="markerSize" type="number" step="1" value="50"></div>
+      <div class="row"><label>От центра маркера → правый край</label><input id="dxRight" type="number" step="1" value="35"></div>
+      <div class="row"><label>От центра маркера → нижний край</label><input id="dyBottom" type="number" step="1" value="35"></div>
+      <div class="row"><label>Высота над плоскостью (Z)</label><input id="zLift" type="number" step="0.5" value="1"></div>
+      <div class="row"><label>Поворот в плоскости (°)</label><input id="rotZ" type="number" step="1" value="90"></div>
+      <div class="grid">
+        <label><input id="showA5" type="checkbox" checked> Показать контур A5</label>
+        <label><input id="showMarkerBox" type="checkbox" checked> Показать квадрат маркера</label>
+      </div>
+      <div class="grid">
+        <a id="saveCfg" class="btn" href="#">Сохранить</a>
+        <a id="resetCfg" class="btn" href="#">Сброс</a>
+      </div>
+      <div class="muted">Подгоните значения под вашу печать: W/H — физический формат; размер маркера — черный квадрат без полей; dxRight/dyBottom — расстояния от центра маркера до правого и нижнего края открытки.</div>
+    </details>
+  </div>
+  <div id="toast" hidden>Сохранено</div>
+
   <a-scene vr-mode-ui="enabled:false" embedded
            arjs="sourceType: webcam; debugUIEnabled:false;"
            renderer="logarithmicDepthBuffer:true; antialias:true">
 
     <a-assets timeout="20000">
-      <img id="drawing1" crossorigin="anonymous" src="">
+      <img id="drawing" crossorigin="anonymous" src="">
     </a-assets>
 
-    <!-- ВАЖНО: size = физический размер напечатанного PATT (в метрах). 0.05 = 50 мм. -->
+    <!-- Маркер. size — физический размер черного квадрата в метрах. -->
     <a-marker id="marker" type="pattern" size="0.05" emitevents="true" patternUrl="">
-      <!-- A5-подложка для проверки. Z чуть ниже, чтобы не мерцала. -->
-      <a-entity geometry="primitive: plane; width: 0.21; height: 0.148"
-                position="0 0 -0.0001"
-                rotation="0 0 0"
-                material="color:#00ffff; opacity:0.08; side:double"></a-entity>
 
-      <!-- AR-рисунок: PNG-текстура на плоскости, вершина вдоль оси X -->
-      <a-entity id="ar-plane"
-                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-                mm-align="w:160; h:130; x:-175; y:35; z:1; rotZ:90">
+      <!-- Плоскость AR-изображения. Верх изображения вдоль +X (rotZ=90 по умолчанию). -->
+      <a-entity id="arPlane"
+                material="src:#drawing; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
+                mm-align="w:210; h:148; x:0; y:0; z:1; rotZ:90">
       </a-entity>
+
+      <!-- Вспомогательные контуры для калибровки (можно скрыть) -->
+      <a-entity id="a5Outline" geometry="primitive:plane; width:0.21; height:0.148" position="0 0 -0.0001" material="color:#ffffff; opacity:0.1; wireframe:true; side:double"></a-entity>
+      <a-entity id="markerBox" geometry="primitive:plane; width:0.05; height:0.05" position="0 0 -0.0002" material="color:#00ffff; opacity:0.25; wireframe:true; side:double"></a-entity>
+
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Подставляем ресурсы
-    document.getElementById('drawing1').setAttribute('src', DRAWING_URL);
-    // Используем patternUrl, а не url
+    // Привязка ресурсов
+    document.getElementById('drawing').setAttribute('src', DRAWING_URL);
     document.getElementById('marker').setAttribute('patternUrl', PATT_URL);
+
+    // Калибровка: считаем центр плоскости из габаритов и отступов от краёв
+    const els = {
+      cardW: cardW, cardH: cardH, markerSize: markerSize,
+      dxRight: dxRight, dyBottom: dyBottom, zLift: zLift, rotZ: rotZ,
+      showA5: showA5, showMarkerBox: showMarkerBox,
+      save: saveCfg, reset: resetCfg,
+      marker: document.getElementById('marker'),
+      arPlane: document.getElementById('arPlane'),
+      a5Outline: document.getElementById('a5Outline'),
+      markerBox: document.getElementById('markerBox'),
+      toast: document.getElementById('toast')
+    };
+
+    const LS_KEY = 'ar-postcard-calib-v1';
+
+    function loadCfg(){
+      try{ const cfg = JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+        for(const k of ['cardW','cardH','markerSize','dxRight','dyBottom','zLift','rotZ']) if(cfg[k]!=null) els[k].value = cfg[k];
+        if(cfg.showA5!=null) els.showA5.checked = cfg.showA5;
+        if(cfg.showMarkerBox!=null) els.showMarkerBox.checked = cfg.showMarkerBox;
+      }catch(e){}
+    }
+
+    function saveCfgNow(){
+      const cfg = collectCfg();
+      localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      els.toast.textContent = 'Сохранено'; els.toast.hidden = false; setTimeout(()=>els.toast.hidden=true, 1200);
+    }
+
+    function collectCfg(){
+      return {
+        cardW:+els.cardW.value, cardH:+els.cardH.value,
+        markerSize:+els.markerSize.value,
+        dxRight:+els.dxRight.value, dyBottom:+els.dyBottom.value,
+        zLift:+els.zLift.value, rotZ:+els.rotZ.value,
+        showA5:els.showA5.checked, showMarkerBox:els.showMarkerBox.checked
+      };
+    }
+
+    function mm(v){ return v*0.001; }
+
+    function apply(){
+      const cfg = collectCfg();
+
+      // Центр плоскости открытки относительно центра маркера:
+      // +X вправо, +Y вверх. Правый и нижний края заданы от центра маркера.
+      const cx =  cfg.dxRight - cfg.cardW/2;   // мм
+      const cy =  cfg.cardH/2 - cfg.dyBottom;  // мм
+
+      els.arPlane.setAttribute('mm-align', `w:${cfg.cardW}; h:${cfg.cardH}; x:${cx}; y:${cy}; z:${cfg.zLift}; rotZ:${cfg.rotZ}`);
+
+      // Контур A5 совпадает с плоскостью AR
+      els.a5Outline.setAttribute('geometry', {primitive:'plane', width:mm(cfg.cardW), height:mm(cfg.cardH)});
+      els.a5Outline.setAttribute('position', `${mm(cx)} ${mm(cy)} -0.0001`);
+      els.a5Outline.setAttribute('visible', cfg.showA5);
+
+      // Квадрат маркера — по центру маркера
+      els.markerBox.setAttribute('geometry', {primitive:'plane', width:mm(cfg.markerSize), height:mm(cfg.markerSize)});
+      els.markerBox.setAttribute('visible', cfg.showMarkerBox);
+
+      // Физический размер маркера (ВАЖНО для точного трекинга)
+      els.marker.setAttribute('size', mm(cfg.markerSize));
+    }
+
+    function bind(){
+      for(const id of ['cardW','cardH','markerSize','dxRight','dyBottom','zLift','rotZ','showA5','showMarkerBox']){
+        els[id].addEventListener('input', apply);
+      }
+      els.save.addEventListener('click', (e)=>{e.preventDefault(); saveCfgNow();});
+      els.reset.addEventListener('click', (e)=>{e.preventDefault(); localStorage.removeItem(LS_KEY); loadCfg(); apply();});
+    }
+
+    loadCfg(); bind(); apply();
   </script>
 </body>
 </html>
-
