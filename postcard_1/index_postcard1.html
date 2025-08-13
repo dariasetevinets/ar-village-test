@@ -8,7 +8,7 @@
 
   <!-- A-Frame + AR.js (зафиксируйте версии под прод) -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
   <style>
     html,body{margin:0;height:100%;overflow:hidden;background:#000}
     /* iOS gate */
@@ -56,7 +56,7 @@
     </div>
   </div>
   <a-scene vr-mode-ui="enabled:false" embedded
-           arjs="sourceType: webcam; facingMode: environment; videoTexture: true; debugUIEnabled:false;"
+           arjs="sourceType: webcam; facingMode: environment; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; videoTexture: true; debugUIEnabled:false;"
            renderer="logarithmicDepthBuffer:true; antialias:true">
 
     <a-assets timeout="20000">
@@ -79,7 +79,7 @@
     // x = DX_RIGHT - CARD_W/2 = 35 - 105 = -70 мм
     // y = CARD_H/2 - DY_BOTTOM = 74 - 35 = 39 мм
 
-    // ===== iOS/permission fallback =====
+    // ===== iOS/permission fallback + надёжный запуск камеры =====
     (function(){
       const gate = document.getElementById('gate');
       const btn = document.getElementById('startBtn');
@@ -87,32 +87,43 @@
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-      // Скрываем гейт, когда камера запущена
       function hideGate(){ gate.hidden = true; }
       scene.addEventListener('arjs-video-loaded', hideGate);
       scene.addEventListener('camera-init', hideGate);
 
-      // При ошибке показываем подсказку
-      scene.addEventListener('camera-error', function(){ gate.hidden = false; });
+      scene.addEventListener('camera-error', function(e){ console.warn('camera-error', e); gate.hidden = false; });
 
-      // Пользовательский жест — попытка вручную запустить видео AR.js
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        // Найти созданный AR.js <video> и попробовать воспроизвести с пользовательского жеста
+      function ensureVideoPlayable(){
         const v = document.querySelector('video');
-        if (v) {
-          try {
-            v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.muted = true; v.play();
-          } catch(_){}
-        }
-        // На iOS иногда нужна повторная инициализация: тронем атрибут, чтобы AR.js пересобрал стрим
+        if (!v) return false;
+        try {
+          v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
+          v.muted = true; v.autoplay = true; v.playsInline = true;
+          const p = v.play(); if (p && typeof p.then === 'function') p.catch(()=>{});
+        } catch(_){}
+        return true;
+      }
+
+      function restartAR(){
         const ar = scene.getAttribute('arjs') || '';
         scene.setAttribute('arjs', ar);
+      }
+
+      function tryStart(){
+        const ok = ensureVideoPlayable();
+        if (!ok) restartAR();
+        setTimeout(()=>{ ensureVideoPlayable(); }, 400);
+      }
+
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        tryStart();
       });
 
-      // На не‑iOS убираем гейт, если камера стартовала прямо на загрузке
-      if (!isIOS) setTimeout(()=>{ const v=document.querySelector('video'); if (v && v.readyState>2) gate.hidden=true; }, 1500);
+      document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) tryStart(); });
+      if (!isIOS) setTimeout(()=>{ const v=document.querySelector('video'); if (v && v.readyState>2 && !v.paused) gate.hidden=true; else tryStart(); }, 1200);
     })();
   </script>
 </body>
 </html>
+
