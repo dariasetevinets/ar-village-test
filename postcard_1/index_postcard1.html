@@ -9,121 +9,20 @@
   <!-- A-Frame + AR.js (зафиксируйте версии под прод) -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
-  <style>
-    html,body{margin:0;height:100%;overflow:hidden;background:#000}
-    /* iOS gate */
-    #gate{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(1200px 600px at 50% -10%,rgba(255,255,255,.25),rgba(0,0,0,.85));z-index:9}
-    #gate .card{max-width:min(92vw,520px);background:#111;color:#fff;border-radius:16px;padding:18px 18px 16px;box-shadow:0 12px 40px rgba(0,0,0,.45);font:500 14px/1.4 system-ui,Segoe UI,Roboto,Arial}
-    #gate h1{font-size:18px;margin:0 0 6px}
-    #gate p{margin:6px 0;color:#ddd}
-    #gate .btn{display:inline-block;margin-top:10px;padding:10px 14px;border-radius:12px;background:#09f;color:#fff;text-decoration:none}
-    #gate .tips{margin-top:10px;font-size:12px;color:#9aa1aa}
-    #gate[hidden]{display:none}
-  </style>
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
 
   <script>
-    // Файлы проекта
-    const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png"; // AR-изображение
-    const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";          // Маркер на печатной открытке
-
-    // Геометрия открытки 1 (без калибровки, жёстко):
-    // A5 по горизонтали: 210×148 мм; маркер 50 мм.
-    // Центр маркера отстоит от правого и нижнего краёв на 35 мм.
-    const CARD_W = 210, CARD_H = 148;    // мм
-    const MARKER_MM = 50;                // мм (черный квадрат)
-    const DX_RIGHT = 35, DY_BOTTOM = 35; // мм
-
-    // mm-align: позиционирование и поворот в системе маркера, вход — мм
-    AFRAME.registerComponent('mm-align', {
-      schema: { w:{type:'number'}, h:{type:'number'}, x:{type:'number'}, y:{type:'number'}, z:{type:'number',default:1}, rotZ:{type:'number',default:90} },
-      update(){
-        const mm=0.001, d=this.data;
-        this.el.setAttribute('geometry', {primitive:'plane', width:d.w*mm, height:d.h*mm});
-        this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
-        this.el.setAttribute('rotation', `0 0 ${d.rotZ}`); // почему: «верх» PNG должен идти вдоль +X
-      }
-    });
-  </script>
-</head>
-<body>
-  <!-- iOS/permissions gate: скрывается автоматически после успешного запуска камеры -->
-  <div id="gate" aria-live="polite">
-    <div class="card">
-      <h1>Разрешите доступ к камере</h1>
-      <p>Нажмите кнопку ниже. На iOS откройте страницу в <b>Safari</b>, затем подтвердите системный запрос «Allow camera».</p>
-      <a id="startBtn" href="#" class="btn">Включить камеру</a>
-      <div class="tips">Если видите черный экран: закройте встроенный браузер приложения (Instagram/Telegram/VK) и откройте эту страницу в Safari. Звук не требуется — видео запускается без звука.</div>
-    </div>
-  </div>
-  <a-scene vr-mode-ui="enabled:false" embedded
-           arjs="sourceType: webcam; facingMode: environment; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; videoTexture: true; debugUIEnabled:false;"
-           renderer="logarithmicDepthBuffer:true; antialias:true">
-
-    <a-assets timeout="20000">
-      <img id="drawing" crossorigin="anonymous" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png">
-    </a-assets>
-
-    <!-- ВАЖНО: size = физический размер черного квадрата маркера (в метрах) -->
-    <a-marker type="pattern" patternUrl="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" size="0.05" emitevents="true">
-      <a-entity id="arPlane"
-                material="src:#drawing; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-                mm-align="w:210; h:148; x:-70; y:39; z:1; rotZ:90">
-      </a-entity>
-    </a-marker>
-
-    <a-entity camera></a-entity>
-  </a-scene>
-
-  <script>
-    // Вычисление смещений (справка):
-    // x = DX_RIGHT - CARD_W/2 = 35 - 105 = -70 мм
-    // y = CARD_H/2 - DY_BOTTOM = 74 - 35 = 39 мм
-
-    // ===== iOS/permission fallback + надёжный запуск камеры =====
+    // Справка по смещениям:
+    // x = 35 - 210/2 = -70 мм,  y = 148/2 - 35 = 39 мм
+    // Лёгкая диагностика: выводим ключевые события в консоль
     (function(){
-      const gate = document.getElementById('gate');
-      const btn = document.getElementById('startBtn');
       const scene = document.querySelector('a-scene');
-
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-      function hideGate(){ gate.hidden = true; }
-      scene.addEventListener('arjs-video-loaded', hideGate);
-      scene.addEventListener('camera-init', hideGate);
-
-      scene.addEventListener('camera-error', function(e){ console.warn('camera-error', e); gate.hidden = false; });
-
-      function ensureVideoPlayable(){
-        const v = document.querySelector('video');
-        if (!v) return false;
-        try {
-          v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline','');
-          v.muted = true; v.autoplay = true; v.playsInline = true;
-          const p = v.play(); if (p && typeof p.then === 'function') p.catch(()=>{});
-        } catch(_){}
-        return true;
-      }
-
-      function restartAR(){
-        const ar = scene.getAttribute('arjs') || '';
-        scene.setAttribute('arjs', ar);
-      }
-
-      function tryStart(){
-        const ok = ensureVideoPlayable();
-        if (!ok) restartAR();
-        setTimeout(()=>{ ensureVideoPlayable(); }, 400);
-      }
-
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        tryStart();
-      });
-
-      document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) tryStart(); });
-      if (!isIOS) setTimeout(()=>{ const v=document.querySelector('video'); if (v && v.readyState>2 && !v.paused) gate.hidden=true; else tryStart(); }, 1200);
+      scene.addEventListener('camera-init', ()=>console.log('[AR] camera-init'));
+      scene.addEventListener('arjs-video-loaded', ()=>console.log('[AR] video-loaded'));
+      scene.addEventListener('camera-error', (e)=>console.warn('[AR] camera-error', e));
     })();
   </script>
 </body>
 </html>
+
 
