@@ -27,37 +27,6 @@
         }
     </style>
 </head>
-    <script>
-        AFRAME.registerComponent('drawing1-align', {
-            init: function() {
-                this.drawing1Size = {
-                    width: 0.148,
-                    height: 0.210
-                };
-                
-                this.drawingArea = {
-                    width: 0.148,
-                    height: 0.210,
-                    offsetX: -0.0215, 
-                    offsetY: 0.069   
-                };
-            },
-            tick: function() {
-                if (!this.el.object3D.visible) return;
-                
-                const marker = this.el.parentEl.object3D;
-                const position = new THREE.Vector3();
-                position.setFromMatrixPosition(marker.matrixWorld);
-                
-                position.x += this.drawingArea.offsetX;
-                position.y += this.drawingArea.offsetY;
-                position.z += 0.001; 
-                
-                this.el.object3D.position.copy(position);
-                this.el.object3D.quaternion.setFromRotationMatrix(marker.matrixWorld);
-            }
-        });
-    </script>
     
 <body>
     <div class="status">Наведите камеру на маркер</div>
@@ -97,7 +66,21 @@
 
         <a-entity camera></a-entity>
     </a-scene>
-  
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.querySelector('.status');
+            const scene = document.querySelector('a-scene');
+            
+            scene.addEventListener('markerFound', () => {
+                statusEl.textContent = "Маркер распознан!";
+            });
+
+            scene.addEventListener('markerLost', () => {
+                statusEl.textContent = "Наведите камеру на маркер";
+            });
+        });
+    </script>
 </body>
 </html>
 
