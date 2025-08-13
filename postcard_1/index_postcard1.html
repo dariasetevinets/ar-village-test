@@ -10,21 +10,20 @@
   <style>body{margin:0;overflow:hidden}</style>
 
   <script>
-    // ПУТИ (замени при необходимости)
+    // Пути к ресурсам (замени при необходимости)
     const DRAWING_URL = "https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png";
     const PATT_URL    = "https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt";
 
-    // mm-align: локальные координаты ОТНОСИТЕЛЬНО маркера (центр маркера = 0,0,0)
-    // Надёжный вариант: обновляем GEOMETRY напрямую
+    // mm-align: локальные координаты ОТ ЦЕНТРА МАРКЕРА (мм), управление GEOMETRY (в метрах)
     AFRAME.registerComponent('mm-align', {
       schema: {
-        w:{type:'number',default:130},  // мм – ширина рисунка
-        h:{type:'number',default:160},  // мм – высота рисунка
-        x:{type:'number',default:-175}, // мм – влево(−)/вправо(+)
-        y:{type:'number',default:35},   // мм – вверх(+)/вниз(−)
-        z:{type:'number',default:1},    // мм – к камере
-        orientation:{type:'string',default:'flat'}, // 'upright' | 'flat'
-        rotZ:{type:'number',default:90} // поворот в плоскости (градусы)
+        w:{type:'number',default:160},  // мм — ширина рисунка
+        h:{type:'number',default:130},  // мм — высота рисунка
+        x:{type:'number',default:-175}, // мм — влево(−)/вправо(+)
+        y:{type:'number',default:35},   // мм — вверх(+)/вниз(−)
+        z:{type:'number',default:1},    // мм — к камере
+        orientation:{type:'string',default:'upright'}, // 'upright' | 'flat'
+        rotZ:{type:'number',default:90} // поворот в плоскости (градусы), чтобы «верх» шёл вдоль X
       },
       init(){ this._apply=this._apply.bind(this); this.el.addEventListener('loaded',this._apply); },
       remove(){ this.el.removeEventListener('loaded',this._apply); },
@@ -32,7 +31,7 @@
       _apply(){
         const mm=0.001, d=this.data;
         const W = d.w*mm, H = d.h*mm;
-        // критично: менять именно geometry, а не width/height
+        // Важно: обновлять geometry (а не width/height атрибуты)
         this.el.setAttribute('geometry', {primitive:'plane', width: W, height: H});
         this.el.setAttribute('position', `${d.x*mm} ${d.y*mm} ${d.z*mm}`);
         const base = (d.orientation==='flat') ? [-90,0,0] : [0,0,0];
@@ -50,18 +49,18 @@
       <img id="drawing1" crossorigin="anonymous" src="">
     </a-assets>
 
-    <!-- ВАЖНО: size должен совпадать с физическим размером печатного маркера (0.05 = 50 мм) -->
+    <!-- size ДОЛЖЕН совпадать с реальным печатным размером маркера (0.05 = 50 мм) -->
     <a-marker id="marker" type="pattern" size="0.05" emitevents="true" url="">
-      <!-- (опционально) подложка A5 для контроля геометрии, можно убрать -->
+      <!-- (опционально) A5-подложка для визуальной проверки — можно убрать -->
       <a-plane position="-0.105 0.074 0.0005"
                width="0.21" height="0.148"
-               rotation="0 0 0" 
+               rotation="0 0 0"
                material="color:#00ffff; opacity:0.08; side:double"></a-plane>
 
-      <!-- сам AR-рисунок: плоскость с текстурой -->
+      <!-- AR-рисунок: плоскость с текстурой PNG -->
       <a-plane id="ar-plane"
                material="src:#drawing1; transparent:true; alphaTest:0; opacity:1; side:double; shader:flat"
-               mm-align="w:130; h:160; x:-2500; y:700; z:0.5; orientation:flat; rotZ:90"> // Перенос вершины в плоскость х
+               mm-align="w:160; h:130; x:-175; y:35; z:1; orientation:upright; rotZ:90">
       </a-plane>
     </a-marker>
 
@@ -69,12 +68,13 @@
   </a-scene>
 
   <script>
-    // подставляем ресурсы
+    // Подставляем ресурсы
     document.getElementById('drawing1').setAttribute('src', DRAWING_URL);
     document.getElementById('marker').setAttribute('url', PATT_URL);
   </script>
 </body>
 </html>
+
 
 
 
