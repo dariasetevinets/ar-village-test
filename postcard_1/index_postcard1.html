@@ -14,6 +14,68 @@
         body { margin: 0; overflow: hidden; background: #000; }
     </style>
 </head>
+        <script>
+        AFRAME.registerComponent('card-align', {
+            init: function() {
+                this.cardSize = {
+                    width: 0.148,
+                    height: 0.210
+                };
+                
+                this.drawingArea = {
+                    width: 0.148,
+                    height: 0.210,
+                    offsetX: -0.0215,  // Смещение влево от центра
+                    offsetY: 0.069     // Смещение вверх от центра
+                };
+            },
+            tick: function() {
+                if (!this.el.object3D.visible) return;
+                
+                const marker = this.el.parentEl.object3D;
+                const position = new THREE.Vector3();
+                position.setFromMatrixPosition(marker.matrixWorld);
+                
+                // Корректировка позиции относительно маркера
+                position.x += this.drawingArea.offsetX;
+                position.y += this.drawingArea.offsetY;
+                position.z += 0.001; 
+                
+                this.el.object3D.position.copy(position);
+                this.el.object3D.quaternion.setFromRotationMatrix(marker.matrixWorld);
+            }
+        });
+    </script>
+    <style>
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            text-align: center;
+            font-family: Arial;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        .loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .card-info {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            font-size: 18px;
+            z-index: 999;
+        }
+    </style>
 <body>
     <a-scene 
         vr-mode-ui="enabled: false"
@@ -26,19 +88,19 @@
         <a-assets>
             <img id="drawing1" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
         </a-assets>
-
+        
         <a-marker 
             type="pattern"
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
             size="0.05"
-        >
+            >
             <a-plane
-                position="0 0 0"
+                position="0.1 0.05 0"
                 rotation="-90 0 0"
-                width="0.21"
-                height="0.148"
-                material="src: #drawing1; transparent: true"
-            ></a-plane>
+                width="0.3"
+                height="0.213"
+                material="src: #card; transparent: true"
+                ></a-plane>
         </a-marker>
 
         <a-entity camera></a-entity>
