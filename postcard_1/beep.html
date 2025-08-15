@@ -42,83 +42,106 @@
             </script>
             
             <script id="fragmentShader" type="x-shader/x-fragment">
-                precision mediump float;
+                precision highp float;
                 uniform sampler2D map;
                 uniform float time;
-                uniform float intensity;
                 varying vec2 vUv;
                 
-                float rand(vec2 co) {
-                    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+                float hash(vec3 p) {
+                    p  = fract(p * 0.3183099 + 0.1);
+                    p *= 17.0;
+                    return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
+                },
+
+                float noise(vec3 x) {
+                    vec3 i = floor(x);
+                    vec3 f = fract(x);
+                    f = f*f*(3.0-2.0*f);
+                return mix(
+                    mix(
+                        mix(
+                            hash(i+vec3(0,0,0)),
+                            hash(i+vec3(1,0,0)),
+                            f.x
+                        ),
+                        mix(
+                            hash(i+vec3(0,1,0)),
+                            hash(i+vec3(1,1,0)),
+                            f.x
+                        ),
+                        f.y
+                    ),
+                    mix(
+                        mix(
+                            hash(i+vec3(0,0,1)),
+                            hash(i+vec3(1,0,1)),
+                            f.x
+                        ),
+                        mix(
+                            hash(i+vec3(0,1,1)),
+                            hash(i+vec3(1,1,1)),
+                            f.x
+                        ),
+                        f.y
+                    ),
+                    f.z
+                );
                 }
-                
+
                 void main() {
-                    vec2 uv = vUv; 
+                    vec2 uv = vUv;
                     vec4 tex = texture2D(map, uv);
-                    
-                    // Усиленная анимация
-                    float wave1 = sin(time * 2.0 + uv.x * 80.0) * 0.2 * intensity; 
-                    float wave2 = cos(time * 3.0 + uv.y * 80.0) * 0.2 * intensity;
-                    float noise = rand(vec2(uv.x * 100.0 + time, uv.y * 100.0)) * 0.8 * intensity;
-                    
-                    float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
-                    vec3 black = vec3(0.0);
-                    
-                    gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
+    
+                    float speed = 0.5;
+                    float density = 40.0;
+                    float antsIntensity = 0.5;
+    
+                    float ants = 0.0;
+                    for(int i = 0; i < 5; i++) {
+                        float fi = float(i);
+                        vec2 offset = vec2(
+                            noise(vec3(uv * 30.0, time * speed + fi * 100.0)) * 0.02,
+                            noise(vec3(uv * 30.0 + 100.0, time * speed + fi * 100.0)) * 0.02
+                        );
+                        ants += noise(vec3(uv * density + offset, time * 2.0 + fi)) * 0.2;
+                    },
+    
+                    vec3 antsColor = mix(vec3(0.1, 0.05, 0.0), vec3(0.3, 0.2, 0.1), ants);
+                    float mask = smoothstep(0.3, 0.8, tex.a);
+    
+                    gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask * antsIntensity), tex.a);
                 }
             </script>
+            
         </a-assets>
 
         <script>
-            AFRAME.registerComponent('custom-shader', {
+            AFRAME.registerComponent('fractal-effect', {
                 schema: {
                     speed: { type: 'number', default: 2.0 }, 
-                    intensity: { type: 'number', default: 1.5 } 
+                    complexity: {type: 'number', default: 3.0},
+                    contrast: {type: 'number', default: 1.2},
+                    intensity: { type: 'number', default: 1.5 }, 
+                    scale: {type: 'number', default: 5.0}
                 },
                 
                 init: function() {
-                    const el = this.el;
-                    const textureLoader = new THREE.TextureLoader();
-                    
-                    textureLoader.load(
-                        document.querySelector('#main-texture').src,
-                        (texture) => {
-                            texture.minFilter = THREE.LinearFilter;
-                            
-                            this.material = new THREE.ShaderMaterial({
-                                uniforms: {
-                                    map: { value: texture },
-                                    time: { value: 0 },
-                                    intensity: { value: 3 }
-                                },
-                                vertexShader: document.getElementById('vertexShader').textContent,
-                                fragmentShader: document.getElementById('fragmentShader').textContent,
-                                transparent: true
-                            });
-
-                            const applyMaterial = () => {
-                                const mesh = el.getObject3D('mesh');
-                                if (mesh) {
-                                    console.log("Applying shader material");
-                                    mesh.material = this.material;
-                                } else {
-                                    console.warn("Mesh not found, retrying...");
-                                    setTimeout(applyMaterial, 100);
-                                }
-                            };
-                            
-                            el.addEventListener('model-loaded', applyMaterial);
-                            applyMaterial();
-                        },
-                        undefined,
-                        (err) => {
-                            console.error("Texture load failed:", err);
-                            this.material = new THREE.MeshBasicMaterial({
-                                color: 0xFF0000,
-                                transparent: true
-                            });
-                        }
-                    );
+                    const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
+                       this.material = new THREE.ShaderMaterial({
+                           uniforms: {
+                               map: { value: texture },
+                               time: { value: 0 },
+                               speed: {value: this.data.speed},
+                               complexity: {value: this.data.complexity},
+                               contrast: {value: this.data.contrast},
+                               scale: {value: this.data.scale}
+                            },
+                            vertexShader: document.getElementById('vertexShader').textContent,
+                            fragmentShader: document.getElementById('fragmentShader').textContent,
+                            transparent: true
+                        });
+                        this.el.object3D.children[0].material = this.material;
+                    });
                 },
                 
                 tick: function(time) {
@@ -134,13 +157,12 @@
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" 
             size="0.05"
         >
-            <a-plane
-                width="8.2"
-                height="5.92"
-                rotation="-90 0 0"
-                position="0 0 0"
-                custom-shader="speed: 5.0; intensity: 2.0"
-            ></a-plane>
+            <a-plane fractal-effect="
+                speed: 0.3;
+                complexity: 4.0;
+                contrast: 1.5;
+                scale: 3.0
+            "></a-plane>
         </a-marker>
 
         <a-entity camera></a-entity>
