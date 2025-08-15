@@ -57,9 +57,9 @@
                     vec4 tex = texture2D(map, uv);
                     
                     // Усиленная анимация
-                    float wave1 = sin(time * 5.0 + uv.x * 100.0) * 0.4 * intensity; 
-                    float wave2 = cos(time * 4.0 + uv.y * 80.0) * 0.4 * intensity;
-                    float noise = rand(vec2(uv.x * 30.0 + time, uv.y * 30.0)) * 0.5 * intensity;
+                    float wave1 = sin(time * 2.0 + uv.x * 50.0) * 0.6 * intensity; 
+                    float wave2 = cos(time * 5.0 + uv.y * 80.0) * 0.4 * intensity;
+                    float noise = rand(vec2(uv.x * 30.0 + time, uv.y * 30.0)) * 0.8 * intensity;
                     
                     float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
                     vec3 black = vec3(0.0);
@@ -139,7 +139,7 @@
                 height="5.92"
                 rotation="-90 0 0"
                 position="0 0 0"
-                custom-shader="speed: 5.0; intensity: 3.0"
+                custom-shader="speed: 5.0; intensity: 2.0"
             ></a-plane>
         </a-marker>
 
