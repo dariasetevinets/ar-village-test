@@ -57,9 +57,9 @@
                     vec4 tex = texture2D(map, uv);
                     
                     // Усиленная анимация
-                    float wave1 = sin(time * 2.0 + uv.x * 50.0) * 0.6 * intensity; 
-                    float wave2 = cos(time * 5.0 + uv.y * 80.0) * 0.4 * intensity;
-                    float noise = rand(vec2(uv.x * 80.0 + time, uv.y * 80.0)) * 0.8 * intensity;
+                    float wave1 = sin(time * 2.0 + uv.x * 80.0) * 0.2 * intensity; 
+                    float wave2 = cos(time * 3.0 + uv.y * 80.0) * 0.2 * intensity;
+                    float noise = rand(vec2(uv.x * 100.0 + time, uv.y * 100.0)) * 0.8 * intensity;
                     
                     float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
                     vec3 black = vec3(0.0);
