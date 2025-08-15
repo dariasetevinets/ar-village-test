@@ -58,8 +58,8 @@
 
                 // Функция шума
                 float noise(vec3 p) {
-                    vec3 i = floor(p);
-                    vec3 f = fract(p);
+                    vec3 i = floor(p * 1);
+                    vec3 f = fract(p * 1);
                     f = f*f*(3.0-2.0*f);
                     
                     vec2 uv = (i.xy + vec2(37.0, 17.0)*i.z) + f.xy;
@@ -79,15 +79,15 @@
                     for (int i = 0; i < 3; i++) {
                         float fi = float(i);
                         vec2 offset = vec2(
-                            noise(vec3(uv * 30.0, time * speed + fi * 100.0)) * 0.02,
-                            noise(vec3(uv * 30.0 + 100.0, time * speed + fi * 100.0)) * 0.02
+                            noise(vec3(uv * 15.0, time * speed + fi * 50.0)) * 0.05,
+                            noise(vec3(uv * 15.0 + 50.0, time * speed + fi * 50.0)) * 0.05
                         );
-                        ants += noise(vec3(uv * density + offset, time * 2.0 + fi)) * 0.5;
+                        ants += noise(vec3(uv * (density * 0.7) + offset, time * 1.5 + fi)) * 0.7;
                     }
                     
                     // Усиливаем эффект
-                    ants = clamp(ants * 2.0, 0.0, 1.0);
-                    ants = smoothstep(0.3, 0.8, ants);
+                    ants = clamp(ants * 3.0, 0.0, 1.0);
+                    ants = smoothstep(0.2, 0.9, ants);
     
                     // Создаем цвет эффекта (более контрастный)
                     vec3 antsColor = mix(vec3(0.9, 0.4, 0.1), vec3(1.0, 0.7, 0.3), ants);
@@ -103,9 +103,9 @@
         <script>
             AFRAME.registerComponent('ants-effect', {
                 schema: {
-                    speed: { type: 'number', default: 0.5 },
-                    density: { type: 'number', default: 30.0 },
-                    intensity: { type: 'number', default: 0.7 }
+                    speed: { type: 'number', default: 0.2 },
+                    density: { type: 'number', default: 20.0 },
+                    intensity: { type: 'number', default: 0.9 }
                 },
                 
                 init: function() {
@@ -145,7 +145,7 @@
                 
                 tick: function(time) {
                     if (this.material && this.material.uniforms.time) {
-                        this.material.uniforms.time.value = time / 500;
+                        this.material.uniforms.time.value = time / 800;
                     }
                 },
                 
@@ -166,9 +166,9 @@
         >
             <a-plane 
                 ants-effect="
-                    speed: 0.5;
-                    density: 25.0;
-                    intensity: 0.9
+                    speed: 1;
+                    density: 15.0;
+                    intensity: 2
                 "
                 src="#main-texture"
                 width="10"
