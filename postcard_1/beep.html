@@ -38,40 +38,33 @@
             <script id="vertexShader" type="x-shader/x-vertex">
                 varying vec2 vUv;
                 void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            </script>
-            
-            <script id="vertexShader" type="x-shader/x-vertex">
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                };
             </script>
             
             <script id="fragmentShader" type="x-shader/x-fragment">
-            uniform sampler2D map;
-            uniform float time;
-            varying vec2 vUv;
+                uniform sampler2D map;
+                uniform float time;
+                varying vec2 vUv;
             
-            float rand(vec2 co) {
-                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-            }
+                float rand(vec2 co) {
+                    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+                };
                 
-            void main() {
-                vec2 uv = vUv;
-                vec4 tex = texture2D(map, uv);
+                void main() {
+                    vec2 uv = vUv;
+                    vec4 tex = texture2D(map, uv);
                 
-                float ants = sin(time * 2.0 + uv.x * 200.0 + uv.y * 200.0) * 0.2;
-                ants += rand(vec2(uv.x * 10.0 + time, uv.y * 10.0 + time)) * 0.3;
+                    float ants = sin(time * 2.0 + uv.x * 200.0 + uv.y * 200.0) * 0.2;
+                    ants += rand(vec2(uv.x * 10.0 + time, uv.y * 10.0 + time)) * 0.3;
                 
-                float mask = smoothstep(0.3, 0.8, tex.a);
-                vec3 antsColor = vec3(0.0);
+                    float mask = smoothstep(0.3, 0.8, tex.a);
+                    vec3 antsColor = vec3(0.0);
                 
-                gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask * 2.0), tex.a);
-            }
+                    gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask * 2.0), tex.a);
+                };
+                
             </script>
         </a-assets>
 
@@ -104,38 +97,56 @@
                                         new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat
                                     );
                                     this.setupShader(debugTexture);
-                                }
+                                },
                             );
-                        }
+                        },
                     );
                 },
                 setupShader: function(texture) {
                     console.log('Texture loaded:', texture);
+                    if (!texture) {
+                        console.error('Texture failed to load');
+                        return;
+                    },
                     texture.minFilter = THREE.LinearFilter;
-                    
-                    this.material = new THREE.ShaderMaterial({
-                        uniforms: {
-                            map: { value: texture },
-                            time: { value: 0 }
-                        },
-                        vertexShader: document.querySelector('#vertexShader').textContent,
-                        fragmentShader: document.querySelector('#fragmentShader').textContent,
-                        transparent: true
-                    });
-                    
-                    console.log('Shader material created:', this.material);
 
-                    const applyMaterial = () => {
+                    const vertShader = document.getElementById('vertexShader');
+                    const fragShader = document.getElementById('fragmentShader');
+
+                    if (!vertShader || !fragShader) {
+                        console.error('Shader scripts not found in DOM');
+                        return;
+                    },
+
+                    try {
+                        this.material = new THREE.ShaderMaterial({
+                            uniforms: {
+                                map: { value: texture },
+                                time: { value: 0 }
+                            },
+                            vertexShader: document.querySelector('#vertexShader').textContent,
+                            fragmentShader: document.querySelector('#fragmentShader').textContent,
+                            transparent: true
+                        });
+                    
+                        console.log('Shader material created:', this.material);
+                    } catch (e) {
+                        console.error('Shader compilation failed:', e);
+                        return;
+                    },
+
+                    const applyMaterial = (); {
                         const mesh = this.el.getObject3D('mesh');
                         if (mesh) {
                             console.log('Applying material to mesh');
                             mesh.material = this.material;
                         } else {
                             console.warn('Mesh not found');
-                        }
+                        },
                     };
                     
-                    this.el.addEventListener('model-loaded', () => {
+                    this.el.addEventListener('model-loaded', () 
+                        applyMaterial(); {
                         const mesh = this.el.getObject3D('mesh');
                         if (mesh) {
                             mesh.material = this.material;
@@ -143,10 +154,10 @@
                         tick: function(time) {
                             if (this.material && this.material.uniforms.time) {
                                 this.material.uniforms.time.value = time / 1000 * this.data.speed;
-                            }
-                        }
+                            },
+                        },
                     });
-                }
+                },
             });
         </script>
 
