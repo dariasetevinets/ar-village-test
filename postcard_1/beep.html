@@ -1,0 +1,66 @@
+<script>
+    AFRAME.registerComponent('ants-effect', {
+        schema: {
+            speed: {type: 'number', default: 1.0},
+            density: {type: 'number', default: 30.0}
+        },
+        init: function() {
+            const textureLoader = new THREE.TextureLoader();
+            const texture = textureLoader.load(
+                document.querySelector('#drawing1').src,
+                // Успешная загрузка
+                (texture) => {
+                    texture.minFilter = THREE.LinearFilter;
+                    this.applyShaderMaterial(texture);
+                },
+                // Прогресс загрузки
+                undefined,
+                // Ошибка загрузки
+                (err) => {
+                    console.error('Error loading texture:', err);
+                    // Создаем простую текстуру для отладки
+                    const debugTexture = new THREE.TextureLoader().load('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+                    this.applyShaderMaterial(debugTexture);
+                }
+            );
+        },
+        applyShaderMaterial: function(texture) {
+            this.material = new THREE.ShaderMaterial({
+                uniforms: {
+                    map: {value: texture},
+                    time: {value: 0},
+                    density: {value: this.data.density}
+                },
+                vertexShader: document.querySelector('#antsVertShader').textContent,
+                fragmentShader: document.querySelector('#antsFragShader').textContent,
+                transparent: true
+            });
+            
+            // Убедимся, что объект существует
+            if (this.el.object3D && this.el.object3D.children[0]) {
+                this.el.object3D.children[0].material = this.material;
+            } else {
+                console.warn('No mesh found to apply material');
+                this.el.addEventListener('object3dset', () => {
+                    this.el.object3D.children[0].material = this.material;
+                });
+            }
+        },
+        tick: function(time) {
+            if (this.material) {
+                this.material.uniforms.time.value = time / 1000 * this.data.speed;
+            }
+        }
+    });
+</script>
+
+<a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" size="0.05">
+    <a-entity
+        geometry="primitive: plane; width: 0.21; height: 0.148"
+        position="-2.2 0 -1.3"
+        scale="15 15 1"
+        rotation="-90 0 0"
+        ants-effect="speed: 1.5; density: 40"
+        material="shader: flat; transparent: true; src: #drawing1"  <!-- Добавлен явный источник текстуры -->
+    ></a-entity>
+</a-marker>
