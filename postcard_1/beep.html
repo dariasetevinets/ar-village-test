@@ -38,8 +38,8 @@
             <script id="vertexShader" type="x-shader/x-vertex">
                 varying vec2 vUv;
                 void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                 }
             </script>
             
@@ -47,22 +47,22 @@
                 uniform sampler2D map;
                 uniform float time;
                 varying vec2 vUv;
-
+                
                 float rand(vec2 co) {
-                    return fract(sin(dot(co.xy, vec2(12.9898, 78.233)) * 43758.5453);
+                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
                 }
-
+                
                 void main() {
-                    vec2 uv = vUv;
-                    vec4 tex = texture2D(map, uv);
-                    
-                    float ants = sin(time + uv.x * 100.0 + uv.y * 100.0) * 0.1;
-                    ants += rand(vec2(uv.x + time, uv.y + time)) * 0.1;
-                    
-                    float mask = smoothstep(0.3, 0.8, tex.a);
-                    vec3 antsColor = vec3(0.0);
-                    
-                    gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask), tex.a);
+                vec2 uv = vUv;
+                vec4 tex = texture2D(map, uv);
+                
+                float ants = sin(time + uv.x * 100.0 + uv.y * 100.0) * 0.1;
+                ants += rand(vec2(uv.x + time, uv.y + time)) * 0.1;
+                
+                float mask = smoothstep(0.3, 0.8, tex.a);
+                vec3 antsColor = vec3(0.0);
+                
+                gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask), tex.a);
                 }
             </script>
         </a-assets>
@@ -134,23 +134,31 @@
             });
         </script>
 
-        <a-marker 
-            type="pattern" 
-            url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" 
-            preset="custom"
-            size="0.05"
+        <a-marker type="pattern" url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" size="0.05"
             emitevents="true"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance="0.01"
         >
-            <a-plane
-                position="0 0 0"
-                rotation="-90 0 0"
-                width="0.21"
-                height="0.148"
-                material="shader: flat; transparent: true"
-                custom-shader="speed: 1.5"
-            ></a-plane>
-        </a-marker>
+            <a-entity
+                id="image-wrapper"
+                position="-2.2 0 -1.3"
+                scale="15 15 1"
+                rotation="-90 0 1"
+            >
+                <a-plane
+                    src="#drawing1"
+                    width="0.41"
+                    height="0.296"
+                    rotation="0 0 0"
+                    transparent="true"
+                    shader="flat"
+                    alpha-test="0.5"
+                    custom-shader="speed: 1.5"
+                ></a-plane>
+            </a-entity>
 
+        </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
 
