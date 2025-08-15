@@ -110,6 +110,7 @@
                     );
                 },
                 setupShader: function(texture) {
+                    console.log('Texture loaded:', texture);
                     texture.minFilter = THREE.LinearFilter;
                     
                     this.material = new THREE.ShaderMaterial({
@@ -122,22 +123,29 @@
                         transparent: true
                     });
                     
+                    console.log('Shader material created:', this.material);
+
+                    const applyMaterial = () => {
+                        const mesh = this.el.getObject3D('mesh');
+                        if (mesh) {
+                            console.log('Applying material to mesh');
+                            mesh.material = this.material;
+                        } else {
+                            console.warn('Mesh not found');
+                        }
+                    };
+                    
                     this.el.addEventListener('model-loaded', () => {
                         const mesh = this.el.getObject3D('mesh');
                         if (mesh) {
                             mesh.material = this.material;
                         }
+                        tick: function(time) {
+                            if (this.material && this.material.uniforms.time) {
+                                this.material.uniforms.time.value = time / 1000 * this.data.speed;
+                            }
+                        }
                     });
-                    
-                    const mesh = this.el.getObject3D('mesh');
-                    if (mesh) {
-                        mesh.material = this.material;
-                    }
-                },
-                tick: function(time) {
-                    if (this.material && this.material.uniforms.time) {
-                        this.material.uniforms.time.value = time / 1000 * this.data.speed;
-                    }
                 }
             });
         </script>
@@ -174,7 +182,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const statusEl = document.querySelector('.status');
             const scene = document.querySelector('a-scene');
-            
+        
             scene.addEventListener('markerFound', () => {
                 statusEl.textContent = "Маркер распознан";
             });
