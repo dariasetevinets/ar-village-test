@@ -34,26 +34,30 @@
             <img id="main-texture" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
             
             <script id="vertexShader" type="x-shader/x-vertex">
+                attribute vec3 position;
+                attribute vec2 uv;
+                
                 varying vec2 vUv;
                 void main() {
                     vUv = vec2(uv.x, uv.y);
-                    vec4 positionVec = vec4(position.x, position.y, position.z, 1.0);
-                    vec4 transformed = modelViewMatrix * positionVec;
                     gl_Position = projectionMatrix * transformed;
                 };
             </script>
             
             <script id="fragmentShader" type="x-shader/x-fragment">
+                precision mediump float;
                 uniform sampler2D map;
                 uniform float time;
                 varying vec2 vUv;
+                
                 void main() {
-                     vec2 uv = vec2(vUv.x, vUv.y);
-                     vec4 texColor = texture2D(map, uv);
-                     vec3 black = vec3(0.0, 0.0, 0.0);
-                     float effectStrength = 0.5;
-                     vec3 finalColor = mix(texColor.rgb, blackColor, effectStrength);
-                     gl_FragColor = vec4(finalColor, texColor.a);
+                     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                     //vec2 uv = vec2(vUv.x, vUv.y);
+                     //vec4 texColor = texture2D(map, uv);
+                     //vec3 black = vec3(0.0, 0.0, 0.0);
+                     //float effectStrength = 0.5;
+                     //vec3 finalColor = mix(texColor.rgb, blackColor, effectStrength);
+                     //gl_FragColor = vec4(finalColor, texColor.a);
                 };
                 
             </script>
@@ -66,89 +70,34 @@
                 },
                 init: function() {
                     const el = this.el;
-                    const textureLoader = new THREE.TextureLoader();
-                    const textureUrl = 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png';
-                    
-                    textureLoader.load(
+                    const textureLoader = new THREE.TextureLoader().load(
                         document.querySelector('#main-texture').src,
-                        (texture) => {
-                            this.setupShader(texture);
-                        },
-                        undefined,
-                        (err) => {
-                            console.error('Error loading main texture:', err);
-                            textureLoader.load(
-                                document.querySelector('#fallback-texture').src,
-                                (fallbackTexture) => {
-                                    this.setupShader(fallbackTexture);
+                        (tex) => {
+                            this.material = new THREE.ShaderMaterial({
+                                uniforms: {
+                                    map: { value: tex },
+                                    time: { value: 0 }
                                 },
-                                undefined,
-                                (fallbackErr) => {
-                                    console.error('Error loading fallback texture:', fallbackErr);
-                                    const debugTexture = new THREE.DataTexture(
-                                        new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat
-                                    );
-                                    this.setupShader(debugTexture);
-                                },
-                            );
-                        },
-                    );
+                                vertexShader: document.getElementById('vertexShader').textContent,
+                                fragmentShader: document.getElementById('fragmentShader').textContent,
+                                transparent: true,
+                                
+                                attributes: {
+                                    position: { type: 'v3', value: [] },
+                                    uv: { type: 'v2', value: [] }
+                                }
+                            });
+                
+                            const mesh = this.el.getObject3D('mesh');
+                            if (mesh) mesh.material = this.material;   
+                        }, 
+                    ); 
                 },
-                setupShader: function(texture) {
-                    console.log('Texture loaded:', texture);
-                    if (!texture) {
-                        console.error('Texture failed to load');
-                        return;
+
+                tick: function(time) {
+                    if (this.material) {
+                        this.material.uniforms.time.value = time / 1000;
                     },
-                    texture.minFilter = THREE.LinearFilter;
-
-                    const vertShader = document.getElementById('vertexShader');
-                    const fragShader = document.getElementById('fragmentShader');
-
-                    if (!vertShader || !fragShader) {
-                        console.error('Shader scripts not found in DOM');
-                        return;
-                    },
-
-                    try {
-                        this.material = new THREE.ShaderMaterial({
-                            uniforms: {
-                                map: { value: texture },
-                                time: { value: 0 }
-                            },
-                            vertexShader: document.querySelector('#vertexShader').textContent,
-                            fragmentShader: document.querySelector('#fragmentShader').textContent,
-                            transparent: true
-                        });
-                    
-                        console.log('Shader material created:', this.material);
-                    } catch (e) {
-                        console.error('Shader compilation failed:', e);
-                        return;
-                    },
-
-                    const applyMaterial = (); {
-                        const mesh = this.el.getObject3D('mesh');
-                        if (mesh) {
-                            console.log('Applying material to mesh');
-                            mesh.material = this.material;
-                        } else {
-                            console.warn('Mesh not found');
-                        },
-                    };
-                    
-                    this.el.addEventListener('model-loaded', () 
-                        applyMaterial(); {
-                        const mesh = this.el.getObject3D('mesh');
-                        if (mesh) {
-                            mesh.material = this.material;
-                        }
-                        tick: function(time) {
-                            if (this.material && this.material.uniforms.time) {
-                                this.material.uniforms.time.value = time / 1000 * this.data.speed;
-                            },
-                        },
-                    });
                 },
             });
         </script>
