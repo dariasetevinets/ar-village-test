@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>AR Experience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        .status {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: Arial;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="status">Наведите камеру на маркер</div>
+    
+    <a-scene
+        vr-mode-ui="enabled: false"
+        embedded
+        arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat"
+        renderer="logarithmicDepthBuffer: true;"
+    >
+        <a-assets>
+            <img id="main-texture" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
+            
+            <script id="vertexShader" type="x-shader/x-vertex">
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            </script>
+            
+            <script id="fragmentShader" type="x-shader/x-fragment">
+                precision mediump float;
+                uniform sampler2D map;
+                varying vec2 vUv;
+
+                void main() {
+                    vec4 tex = texture2D(map, vUv);
+                    if (tex.a < 0.1) discard;
+                    gl_FragColor = tex;
+                }
+            </script>
+        </a-assets>
+
+        <script>
+            AFRAME.registerComponent('custom-shader', {
+                init: function() {
+                    const el = this.el;
+                    const textureLoader = new THREE.TextureLoader();
+                    
+                    textureLoader.load(
+                        document.querySelector('#main-texture').src,
+                        (texture) => {
+                            texture.minFilter = THREE.LinearFilter;
+                            
+                            this.material = new THREE.ShaderMaterial({
+                                uniforms: {
+                                    map: { value: texture }
+                                },
+                                vertexShader: document.getElementById('vertexShader').textContent,
+                                fragmentShader: document.getElementById('fragmentShader').textContent,
+                                transparent: true
+                            });
+
+                            const applyMaterial = () => {
+                                const mesh = el.getObject3D('mesh');
+                                if (mesh) {
+                                    console.log("Applying shader material");
+                                    mesh.material = this.material;
+                                } else {
+                                    console.warn("Mesh not found, retrying...");
+                                    setTimeout(applyMaterial, 100);
+                                }
+                            };
+                            
+                            el.addEventListener('model-loaded', applyMaterial);
+                            applyMaterial();
+                        },
+                        undefined,
+                        (err) => {
+                            console.error("Texture load failed:", err);
+                            // Fallback красный цвет
+                            this.material = new THREE.MeshBasicMaterial({
+                                color: 0xFF0000,
+                                transparent: true
+                            });
+                        }
+                    );
+                }
+            });
+        </script>
+
+        <a-marker 
+            type="pattern" 
+            url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" 
+            size="0.05"
+        >
+            <a-plane
+                width="0.21"
+                height="0.148"
+                rotation="-90 0 0"
+                custom-shader
+            ></a-plane>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.querySelector('.status');
+            const scene = document.querySelector('a-scene');
+            
+            scene.addEventListener('markerFound', () => {
+                statusEl.textContent = "Маркер распознан";
+                console.log("Marker found");
+            });
+
+            scene.addEventListener('markerLost', () => {
+                statusEl.textContent = "Наведите камеру на маркер";
+                console.log("Marker lost");
+            });
+        });
+    </script>
+</body>
+</html>
