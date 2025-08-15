@@ -7,7 +7,7 @@
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; }
+        body { margin: 0; overflow: hidden; background: transparent; }
         .status {
             position: fixed;
             bottom: 20px;
@@ -19,6 +19,7 @@
             padding: 10px;
             z-index: 100;
         }
+        a-scene { background-color: transparent !important; }
     </style>
 </head>
 <body>
@@ -28,7 +29,7 @@
         vr-mode-ui="enabled: false"
         embedded
         arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat"
-        renderer="logarithmicDepthBuffer: true;"
+        renderer="logarithmicDepthBuffer: true; alpha: true;"
     >
         <a-assets>
             <img id="main-texture" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
@@ -69,12 +70,12 @@
                     float g = hash(i + vec3(0.0, 1.0, 1.0));
                     float h = hash(i + vec3(1.0, 1.0, 1.0));
                     
-                    float k0 =   mix(a, b, f.x);
-                    float k1 =   mix(c, d, f.x);
-                    float k2 =   mix(e, g, f.x);
-                    float k3 =   mix(h, h, f.x);
-                    float k4 =   mix(k0, k1, f.y);
-                    float k5 =   mix(k2, k3, f.y);
+                    float k0 = mix(a, b, f.x);
+                    float k1 = mix(c, d, f.x);
+                    float k2 = mix(e, g, f.x);
+                    float k3 = mix(h, h, f.x);
+                    float k4 = mix(k0, k1, f.y);
+                    float k5 = mix(k2, k3, f.y);
                     
                     return mix(k4, k5, f.z);
                 }
@@ -83,6 +84,7 @@
                     vec2 uv = vUv;
                     vec4 tex = texture2D(map, uv);
                     
+                    // Полностью отбрасываем прозрачные пиксели
                     if (tex.a < 0.01) discard;
     
                     float ants = 0.0;
@@ -96,8 +98,7 @@
                     }
     
                     vec3 antsColor = mix(vec3(0.1, 0.05, 0.0), vec3(0.3, 0.2, 0.1), ants);
-                    float mask = smoothstep(0.3, 0.8, tex.a);
-                    vec3 finalColor = mix(tex.rgb, antsColor, ants * mask * intensity);
+                    vec3 finalColor = mix(tex.rgb, antsColor, ants * tex.a * intensity);
     
                     gl_FragColor = vec4(finalColor, tex.a);
                 }
@@ -114,6 +115,10 @@
                 
                 init: function() {
                     const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
+                        // Важные настройки для прозрачности
+                        texture.premultiplyAlpha = false;
+                        texture.encoding = THREE.sRGBEncoding;
+                        
                         this.material = new THREE.ShaderMaterial({
                             uniforms: {
                                 map: { value: texture },
@@ -125,18 +130,27 @@
                             vertexShader: document.getElementById('vertexShader').textContent,
                             fragmentShader: document.getElementById('fragmentShader').textContent,
                             transparent: true,
-                            depthWrite: false
+                            alphaTest: 0.01,
+                            depthWrite: false,
+                            blending: THREE.CustomBlending,
+                            blendSrc: THREE.SrcAlphaFactor,
+                            blendDst: THREE.OneMinusSrcAlphaFactor,
+                            blendEquation: THREE.AddEquation
                         });
                         
-                        const mesh = this.el.getObject3D('mesh');
-                        if (mesh) {
-                            mesh.material = this.material;
-                        } else {
-                            this.el.addEventListener('model-loaded', () => {
-                                this.el.getObject3D('mesh').material = this.material;
-                            });
-                        }
+                        this.applyMaterialToEntity();
                     });
+                },
+                
+                applyMaterialToEntity: function() {
+                    const mesh = this.el.getObject3D('mesh');
+                    if (mesh) {
+                        mesh.material = this.material;
+                    } else {
+                        this.el.addEventListener('model-loaded', () => {
+                            this.el.getObject3D('mesh').material = this.material;
+                        });
+                    }
                 },
                 
                 tick: function(time) {
@@ -171,6 +185,7 @@
                 height="1"
                 position="0 0 0"
                 rotation="-90 0 0"
+                transparent="true"
             ></a-plane>
         </a-marker>
 
