@@ -85,12 +85,18 @@
             AFRAME.registerComponent('noise-effect', {
                 schema: {
                     speed: { type: 'number', default: 2.0 },
-                    density: { type: 'number', default: 100.0 },
-                    intensity: { type: 'number', default: 0.8 }
+                    //density: { type: 'number', default: 100.0 },
+                    intensity: { type: 'number', default: 1.5 }
                 },
                 
                 init: function() {
-                    const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
+                    const el = this.el;
+                    const textureLoader = new THREE.TextureLoader();
+                    
+                    textureLoader.load(
+                        document.querySelector('#main-texture').src,
+                        (texture) => {
+                            texture.minFilter = THREE.NearestFilter;
                         this.material = new THREE.ShaderMaterial({
                             uniforms: {
                                 map: { value: texture },
