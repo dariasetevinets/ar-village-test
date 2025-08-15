@@ -45,108 +45,111 @@
                 precision highp float;
                 uniform sampler2D map;
                 uniform float time;
+                uniform float speed;
+                uniform float density;
+                uniform float intensity;
                 varying vec2 vUv;
                 
                 float hash(vec3 p) {
                     p  = fract(p * 0.3183099 + 0.1);
                     p *= 17.0;
                     return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
-                },
+                }
 
                 float noise(vec3 x) {
                     vec3 i = floor(x);
                     vec3 f = fract(x);
                     f = f*f*(3.0-2.0*f);
-                return mix(
-                    mix(
-                        mix(
-                            hash(i+vec3(0,0,0)),
-                            hash(i+vec3(1,0,0)),
-                            f.x
-                        ),
-                        mix(
-                            hash(i+vec3(0,1,0)),
-                            hash(i+vec3(1,1,0)),
-                            f.x
-                        ),
-                        f.y
-                    ),
-                    mix(
-                        mix(
-                            hash(i+vec3(0,0,1)),
-                            hash(i+vec3(1,0,1)),
-                            f.x
-                        ),
-                        mix(
-                            hash(i+vec3(0,1,1)),
-                            hash(i+vec3(1,1,1)),
-                            f.x
-                        ),
-                        f.y
-                    ),
-                    f.z
-                );
+                    
+                    float a = hash(i + vec3(0.0, 0.0, 0.0));
+                    float b = hash(i + vec3(1.0, 0.0, 0.0));
+                    float c = hash(i + vec3(0.0, 1.0, 0.0));
+                    float d = hash(i + vec3(1.0, 1.0, 0.0));
+                    float e = hash(i + vec3(0.0, 0.0, 1.0));
+                    float g = hash(i + vec3(0.0, 1.0, 1.0));
+                    float h = hash(i + vec3(1.0, 1.0, 1.0));
+                    
+                    float k0 =   mix(a, b, f.x);
+                    float k1 =   mix(c, d, f.x);
+                    float k2 =   mix(e, g, f.x);
+                    float k3 =   mix(h, h, f.x);
+                    float k4 =   mix(k0, k1, f.y);
+                    float k5 =   mix(k2, k3, f.y);
+                    
+                    return mix(k4, k5, f.z);
                 }
 
                 void main() {
                     vec2 uv = vUv;
                     vec4 tex = texture2D(map, uv);
-    
-                    float speed = 0.5;
-                    float density = 40.0;
-                    float antsIntensity = 0.5;
+                    
+                    if (tex.a < 0.01) discard;
     
                     float ants = 0.0;
-                    for(int i = 0; i < 5; i++) {
+                    for (int i = 0; i < 3; i++) {
                         float fi = float(i);
                         vec2 offset = vec2(
                             noise(vec3(uv * 30.0, time * speed + fi * 100.0)) * 0.02,
                             noise(vec3(uv * 30.0 + 100.0, time * speed + fi * 100.0)) * 0.02
                         );
                         ants += noise(vec3(uv * density + offset, time * 2.0 + fi)) * 0.2;
-                    },
+                    }
     
                     vec3 antsColor = mix(vec3(0.1, 0.05, 0.0), vec3(0.3, 0.2, 0.1), ants);
                     float mask = smoothstep(0.3, 0.8, tex.a);
+                    vec3 finalColor = mix(tex.rgb, antsColor, ants * mask * intensity);
     
-                    gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask * antsIntensity), tex.a);
+                    gl_FragColor = vec4(finalColor, tex.a);
                 }
             </script>
-            
         </a-assets>
 
         <script>
-            AFRAME.registerComponent('fractal-effect', {
+            AFRAME.registerComponent('ants-effect', {
                 schema: {
-                    speed: { type: 'number', default: 2.0 }, 
-                    complexity: {type: 'number', default: 3.0},
-                    contrast: {type: 'number', default: 1.2},
-                    intensity: { type: 'number', default: 1.5 }, 
-                    scale: {type: 'number', default: 5.0}
+                    speed: { type: 'number', default: 0.5 },
+                    density: { type: 'number', default: 40.0 },
+                    intensity: { type: 'number', default: 0.5 }
                 },
                 
                 init: function() {
                     const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
-                       this.material = new THREE.ShaderMaterial({
-                           uniforms: {
-                               map: { value: texture },
-                               time: { value: 0 },
-                               speed: {value: this.data.speed},
-                               complexity: {value: this.data.complexity},
-                               contrast: {value: this.data.contrast},
-                               scale: {value: this.data.scale}
+                        this.material = new THREE.ShaderMaterial({
+                            uniforms: {
+                                map: { value: texture },
+                                time: { value: 0 },
+                                speed: { value: this.data.speed },
+                                density: { value: this.data.density },
+                                intensity: { value: this.data.intensity }
                             },
                             vertexShader: document.getElementById('vertexShader').textContent,
                             fragmentShader: document.getElementById('fragmentShader').textContent,
-                            transparent: true
+                            transparent: true,
+                            depthWrite: false
                         });
-                        this.el.object3D.children[0].material = this.material;
+                        
+                        const mesh = this.el.getObject3D('mesh');
+                        if (mesh) {
+                            mesh.material = this.material;
+                        } else {
+                            this.el.addEventListener('model-loaded', () => {
+                                this.el.getObject3D('mesh').material = this.material;
+                            });
+                        }
                     });
                 },
                 
                 tick: function(time) {
-                    if (this.material?.uniforms?.time) {
-                        this.material.uniforms.time.value = time / 10000 * this.data.speed;
+                    if (this.material && this.material.uniforms.time) {
+                        this.material.uniforms.time.value = time / 1000;
+                    }
+                },
+                
+                update: function() {
+                    if (this.material) {
+                        this.material.uniforms.speed.value = this.data.speed;
+                        this.material.uniforms.density.value = this.data.density;
+                        this.material.uniforms.intensity.value = this.data.intensity;
                     }
                 }
             });
@@ -157,12 +160,18 @@
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" 
             size="0.05"
         >
-            <a-plane fractal-effect="
-                speed: 0.3;
-                complexity: 4.0;
-                contrast: 1.5;
-                scale: 3.0
-            "></a-plane>
+            <a-plane 
+                ants-effect="
+                    speed: 0.3;
+                    density: 30.0;
+                    intensity: 0.4
+                "
+                src="#main-texture"
+                width="1"
+                height="1"
+                position="0 0 0"
+                rotation="-90 0 0"
+            ></a-plane>
         </a-marker>
 
         <a-entity camera></a-entity>
@@ -175,12 +184,10 @@
             
             scene.addEventListener('markerFound', () => {
                 statusEl.textContent = "Маркер распознан";
-                console.log("Marker found");
             });
 
             scene.addEventListener('markerLost', () => {
                 statusEl.textContent = "Наведите камеру на маркер";
-                console.log("Marker lost");
             });
         });
     </script>
