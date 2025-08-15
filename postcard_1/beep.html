@@ -29,7 +29,7 @@
         vr-mode-ui="enabled: false"
         embedded
         arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat"
-        renderer="logarithmicDepthBuffer: true; alpha: true;"
+        renderer="logarithmicDepthBuffer: true;"
     >
         <a-assets>
             <img id="main-texture" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
@@ -93,7 +93,7 @@
                     const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
                         this.material = new THREE.ShaderMaterial({
                             uniforms: {
-                                map: { type: 't', value: tex },
+                                map: { type: 't', value: texture },
                                 time: { type: 'f', value: 0 },
                                 speed: { { type: 'f', value: this.data.speed },
                                 density: { type: 'f', value: this.data.density },
