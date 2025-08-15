@@ -43,15 +43,30 @@
             </script>
             
             <script id="fragmentShader" type="x-shader/x-fragment">
-                precision highp float;
+                precision mediump float;
+                uniform sampler2D map;
+                uniform float time;
+                uniform float intensity;
                 varying vec2 vUv;
 
-                void main() {
+                float rand(vec2 co) {
+                    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+                }
                 
-                    gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+                void main() {
+                    vec2 uv = vUv; 
+                    vec4 tex = texture2D(map, uv);
                 }
 
-
+                    float wave1 = sin(time * 5.0 + uv.x * 100.0) * 0.4 * intensity; 
+                    float wave2 = cos(time * 4.0 + uv.y * 80.0) * 0.4 * intensity;
+                    float noise = rand(vec2(uv.x * 30.0 + time, uv.y * 30.0)) * 0.5 * intensity
+                    float effect = (wave1 + wave2 + noise) * smoothstep(0.8, 0.8, tex.a);
+                    vec3 black = vec3(0.0);
+                    
+                    gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
+                }
+                
                     //float grain = fract(sin(dot(uv, vec2(12.9898, 78.233)) * 43758.5453 + time);
                     //grain = pow(grain, 8.0) * 2.0;
 
