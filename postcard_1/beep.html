@@ -51,43 +51,62 @@
                 uniform float intensity;
                 varying vec2 vUv;
                 
-                // Функция для генерации случайных значений
+
                 float hash(vec2 p) {
-                    return fract(sin(dot(p, vec2(127.1, 311.7)) * 43758.5453);
+                    vec2 p = fract(p * vec2(123.34, 456.21));
+                    p2 += dot(p2, p2 + 45.32);
+                    return fract(p2.x * p2.y);
+                },
+
+                float noise(vec2 uv) {
+                    vec2 i = floor(uv);
+                    vec2 f = fract(uv);
+    
+                    vec2 f2 = f*f*(3.0-2.0*f);
+    
+                    float a = hash(i);
+                    float b = hash(i + vec2(1.0, 0.0));
+                    float c = hash(i + vec2(0.0, 1.0));
+                    float d = hash(i + vec2(1.0, 1.0));
+    
+                    return mix(mix(a, b, f2.x), mix(c, d, f2.x), f2.y);
                 }
-                
-                // Функция точечного шума
-                float dotNoise(vec2 uv, float size) {
-                    vec2 grid = uv * size;
-                    vec2 dotPos = floor(grid) + 0.5;
-                    float dist = length(fract(grid) - 0.5);
-                    return smoothstep(0.3, 0.1, dist) * hash(dotPos);
-                }
-                
+
                 void main() {
                     vec2 uv = vUv;
                     vec4 tex = texture2D(map, uv);
                     
                     if (tex.a < 0.01) discard;
-                    
+
+                    vec2 timeOffset = vec2(time * speed, time * speed * 0.7);
+                    float n = noise(uv * density + timeOffset);
+                    n = pow(n, 2.0) * 3.0;
+
+                    float grain = fract(sin(dot(uv, vec2(12.9898, 78.233)) * 43758.5453 + time);
+                    grain = pow(grain, 8.0) * 2.0;
+
+                    float combinedNoise = min(n + grain, 1.0) * intensity;
+                    vec3 noiseColor = vec3(combinedNoise);
+                    vec3 finalColor = tex.rgb + noiseColor * tex.a;
+                
                     // Генерируем шум (только черно-белый)
-                    float noise = 0.0;
-                    float noiseSize = density * 50.0;
+                    //float noise = 0.0;
+                    //float noiseSize = density * 50.0;
                     
                     // Создаем 3 слоя шума для объема
-                    for (int i = 0; i < 3; i++) {
-                        float fi = float(i);
-                        vec2 offset = vec2(
-                            sin(time * speed * 0.5 + fi * 10.0),
-                            cos(time * speed * 0.3 + fi * 15.0)
-                        ) * 0.5;
+                    //for (int i = 0; i < 3; i++) {
+                        //float fi = float(i);
+                        //vec2 offset = vec2(
+                            //sin(time * speed * 0.5 + fi * 10.0),
+                            //cos(time * speed * 0.3 + fi * 15.0)
+                        //) * 0.5;
                         
-                        noise += dotNoise(uv * 2.0 + offset, noiseSize) * 0.8;
-                    }
+                        //noise += dotNoise(uv * 2.0 + offset, noiseSize) * 0.8;
+                    //}
                     
                     // Применяем шум к текстуре (без цветного эффекта)
-                    float noiseFactor = clamp(noise * intensity, 0.0, 1.0);
-                    vec3 finalColor = mix(tex.rgb, vec3(1.0), noiseFactor * tex.a);
+                    //float noiseFactor = clamp(noise * intensity, 0.0, 1.0);
+                    //vec3 finalColor = mix(tex.rgb, vec3(1.0), noiseFactor * tex.a);
                     
                     gl_FragColor = vec4(finalColor, tex.a);
                 }
@@ -95,24 +114,22 @@
         </a-assets>
 
         <script>
-            AFRAME.registerComponent('pure-noise-effect', {
+            AFRAME.registerComponent('visible-noise-effect', {
                 schema: {
-                    speed: { type: 'number', default: 1.0 },
-                    density: { type: 'number', default: 1.0 },
-                    intensity: { type: 'number', default: 0.5 }
+                    speed: { type: 'number', default: 2.0 },
+                    density: { type: 'number', default: 30.0 },
+                    intensity: { type: 'number', default: 0.8 }
                 },
                 
                 init: function() {
                     const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
-                        texture.premultiplyAlpha = false;
-                        
                         this.material = new THREE.ShaderMaterial({
                             uniforms: {
-                                map: { value: texture },
-                                time: { value: 0 },
-                                speed: { value: this.data.speed },
-                                density: { value: this.data.density },
-                                intensity: { value: this.data.intensity }
+                                map: { type: 't', value: tex },
+                                time: { type: 'f', value: 0 },
+                                speed: { { type: 'f', value: this.data.speed },
+                                density: { type: 'f', value: this.data.density },
+                                intensity: { type: 'f', value: this.data.intensity }
                             },
                             vertexShader: document.getElementById('vertexShader').textContent,
                             fragmentShader: document.getElementById('fragmentShader').textContent,
@@ -120,36 +137,15 @@
                             alphaTest: 0.01,
                             depthWrite: false,
                             blending: THREE.NormalBlending
-                        });
-                        
-                        this.applyToMesh();
+
+                        this.el.object3D.children[0].material = this.material;
                     });
                 },
-                
-                applyToMesh: function() {
-                    const mesh = this.el.getObject3D('mesh');
-                    if (mesh) {
-                        mesh.material = this.material;
-                    } else {
-                        this.el.addEventListener('model-loaded', () => {
-                            const mesh = this.el.getObject3D('mesh');
-                            if (mesh) mesh.material = this.material;
-                        });
-                    }
-                },
-                
                 tick: function(time) {
-                    if (this.material && this.material.uniforms.time) {
+                    if (this.material) {
                         this.material.uniforms.time.value = time / 1000;
                     }
                 },
-                
-                update: function() {
-                    if (this.material) {
-                        this.material.uniforms.speed.value = this.data.speed;
-                        this.material.uniforms.density.value = this.data.density;
-                        this.material.uniforms.intensity.value = this.data.intensity;
-                    }
                 }
             });
         </script>
@@ -160,10 +156,10 @@
             size="0.05"
         >
             <a-plane 
-                pure-noise-effect="
-                    speed: 1.2;
-                    density: 1.2;
-                    intensity: 0.7
+                visible-noise-effect="
+                    speed: 3.0;
+                    density: 50.0;
+                    intensity: 1.2
                 "
                 src="#main-texture"
                 width="10"
