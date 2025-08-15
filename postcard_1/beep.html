@@ -123,7 +123,7 @@
                 
                 tick: function(time) {
                     if (this.material?.uniforms?.time) {
-                        this.material.uniforms.time.value = time / 800 * this.data.speed;
+                        this.material.uniforms.time.value = time / 10000 * this.data.speed;
                     }
                 }
             });
