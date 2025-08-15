@@ -51,87 +51,55 @@
                 uniform float intensity;
                 varying vec2 vUv;
                 
-                // Улучшенная функция случайных чисел
-                float random(vec2 st) {
-                    return fract(sin(dot(st.xy, vec2(127.1,311.7))) * 43758.5453);
-                },
+                // Функция для генерации случайных значений
                 float hash(vec2 p) {
-                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453;
-                },
-
-                // Функция шума
-                float megaNoise(vec2 p) {
-                    vec2 i = floor(p);
-                    vec2 f = fract(p);
-                    f = f*f*(3.0-2.0*f);
-
-                    float a = hash(i + vec2(0.0, 0.0));
-                    float b = hash(i + vec2(1.0, 0.0));
-                    float c = hash(i + vec2(0.0, 1.0));
-                    float d = hash(i + vec2(1.0, 1.0));
-                    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-                
-                    vec2 uv = (i.xy + vec2(37.0, 17.0)*i.z) + f.xy;
-                    vec2 rg = vec2(random(uv), random(uv + 0.5));
-                    return mix(rg.x, rg.y, f.z);
+                    return fract(sin(dot(p, vec2(127.1, 311.7)) * 43758.5453);
                 }
-
+                
+                // Функция точечного шума
+                float dotNoise(vec2 uv, float size) {
+                    vec2 grid = uv * size;
+                    vec2 dotPos = floor(grid) + 0.5;
+                    float dist = length(fract(grid) - 0.5);
+                    return smoothstep(0.3, 0.1, dist) * hash(dotPos);
+                }
+                
                 void main() {
                     vec2 uv = vUv;
                     vec4 tex = texture2D(map, uv);
                     
-                    // Отбрасываем полностью прозрачные пиксели
                     if (tex.a < 0.01) discard;
-    
-                    // Генерируем эффект "муравьев"
-                    float ants = 0.0;
-                    float scale = density * 0.03; // Уменьшаем масштаб в 10 раз
-
-                    for (int i = 0; i < 20; i++) { // 20 итераций вместо 2
-                        float fi = float(i);
-                        vec2 offset = vec2(
-                            hash(vec2(time * speed * 0.5, fi * 50.0)) - 0.5,
-                            hash(vec2(time * speed * 0.5 + 20.0, fi * 50.0)) - 0.5
-                        ) * 1.5; // Смещение x15
-                        
-                        vec2 p = uv * scale + offset;
-                        float pattern = sin(p.x * 3.0 + time * speed * 20.0) * 
-                                      cos(p.y * 3.0 + time * speed * 20.0);
-                                       
-                        // Очень четкие крупные точки
-                        ants += smoothstep(0.7, 0.98, abs(pattern)) * 6.0; // Усиление x10
-                    }
-                
+                    
+                    // Генерируем шум (только черно-белый)
+                    float noise = 0.0;
+                    float noiseSize = density * 50.0;
+                    
+                    // Создаем 3 слоя шума для объема
                     for (int i = 0; i < 3; i++) {
                         float fi = float(i);
                         vec2 offset = vec2(
-                            noise(vec3(uv * 15.0, time * speed + fi * 50.0)) * 0.05,
-                            noise(vec3(uv * 15.0 + 50.0, time * speed + fi * 50.0)) * 0.05
-                        );
-                        ants += noise(vec3(uv * (density * 0.7) + offset, time * 1.5 + fi)) * 0.7;
+                            sin(time * speed * 0.5 + fi * 10.0),
+                            cos(time * speed * 0.3 + fi * 15.0)
+                        ) * 0.5;
+                        
+                        noise += dotNoise(uv * 2.0 + offset, noiseSize) * 0.8;
                     }
                     
-                    // Усиливаем эффект
-                    ants = clamp(ants * 10.0, 0.0, 1.0);
-                    ants = smoothstep(0.7, 0.98, abs(pattern)) * 6.0;
-    
-                    // Яркий неоновый цвет
-                    vec3 antsColor = vec3(1.0, 0.1, 0.05);
+                    // Применяем шум к текстуре (без цветного эффекта)
+                    float noiseFactor = clamp(noise * intensity, 0.0, 1.0);
+                    vec3 finalColor = mix(tex.rgb, vec3(1.0), noiseFactor * tex.a);
                     
-                    // Смешиваем с текстурой
-                    vec3 finalColor = mix(tex.rgb, antsColor, pow(ants, 0.3) * intensity * 10.0 * tex.a);
-    
                     gl_FragColor = vec4(finalColor, tex.a);
                 }
             </script>
         </a-assets>
 
         <script>
-            AFRAME.registerComponent('mega-ants-effect', {
+            AFRAME.registerComponent('pure-noise-effect', {
                 schema: {
-                    speed: { type: 'number', default: 3.0 },
-                    density: { type: 'number', default: 0.5 },
-                    intensity: { type: 'number', default: 10.0 }
+                    speed: { type: 'number', default: 1.0 },
+                    density: { type: 'number', default: 1.0 },
+                    intensity: { type: 'number', default: 0.5 }
                 },
                 
                 init: function() {
@@ -164,14 +132,15 @@
                         mesh.material = this.material;
                     } else {
                         this.el.addEventListener('model-loaded', () => {
-                            this.el.getObject3D('mesh').material = this.material;
+                            const mesh = this.el.getObject3D('mesh');
+                            if (mesh) mesh.material = this.material;
                         });
                     }
                 },
                 
                 tick: function(time) {
                     if (this.material && this.material.uniforms.time) {
-                        this.material.uniforms.time.value = time / 300;
+                        this.material.uniforms.time.value = time / 1000;
                     }
                 },
                 
@@ -191,10 +160,10 @@
             size="0.05"
         >
             <a-plane 
-                ants-effect="
-                    speed: 1;
-                    density: 0.3;
-                    intensity: 15.0
+                pure-noise-effect="
+                    speed: 1.2;
+                    density: 1.2;
+                    intensity: 0.7
                 "
                 src="#main-texture"
                 width="10"
@@ -214,7 +183,8 @@
             const scene = document.querySelector('a-scene');
             
             scene.addEventListener('markerFound', () => {
-                statusEl.textContent = "Маркер распознан";
+                statusEl.textContent = "Маркер распознан - шум должен быть виден";
+                console.log("Marker found - PURE NOISE EFFECT ACTIVE");
             });
 
             scene.addEventListener('markerLost', () => {
@@ -223,5 +193,4 @@
         });
     </script>
 </body>
-</html>
 </html>
