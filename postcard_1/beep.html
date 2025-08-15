@@ -44,25 +44,8 @@
             </script>
             
             <script id="fragmentShader" type="x-shader/x-fragment">
-                uniform sampler2D map;
-                uniform float time;
-                varying vec2 vUv;
-            
-                float rand(vec2 co) {
-                    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-                };
-                
                 void main() {
-                    vec2 uv = vUv;
-                    vec4 tex = texture2D(map, uv);
-                
-                    float ants = sin(time * 2.0 + uv.x * 200.0 + uv.y * 200.0) * 0.2;
-                    ants += rand(vec2(uv.x * 10.0 + time, uv.y * 10.0 + time)) * 0.3;
-                
-                    float mask = smoothstep(0.3, 0.8, tex.a);
-                    vec3 antsColor = vec3(0.0);
-                
-                    gl_FragColor = vec4(mix(tex.rgb, antsColor, ants * mask * 2.0), tex.a);
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Красный
                 };
                 
             </script>
