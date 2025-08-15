@@ -64,8 +64,8 @@
                     speed: {type: 'number', default: 1.0}
                 },
                 init: function() {
-                    const el = this.el;
-                    const textureLoader = new THREE.TextureLoader().load(
+
+                    const texture = new THREE.TextureLoader().load(
                         document.querySelector('#main-texture').src,
                         (tex) => {
                             this.material = new THREE.ShaderMaterial({
@@ -90,8 +90,8 @@
                 },
 
                 tick: function(time) {
-                    if (this.material) {
-                        this.material.uniforms.time.value = time / 1000;
+                    if (this.material?.uniforms?.time) {
+                        this.material.uniforms.time.value = time / 500;
                     },
                 },
             });
@@ -109,7 +109,13 @@
                 scale="15 15 1"
                 rotation="-90 0 1"
             >
-                <a-plane color="red" width="1" height="1"></a-plane>
+                <a-plane     
+                    id="shader-plane"
+                    width="0.21"
+                    height="0.148"
+                    rotation="-90 0 0"
+                    custom-shader="speed: 1.5"
+                ></a-plane>
             </a-entity>
 
         </a-marker>
