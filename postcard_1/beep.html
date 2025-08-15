@@ -93,20 +93,30 @@
                     const texture = new THREE.TextureLoader().load('#main-texture', (texture) => {
                         this.material = new THREE.ShaderMaterial({
                             uniforms: {
-                                map: { type: 't', value: texture },
-                                time: { type: 'f', value: 0 },
-                                speed: { { type: 'f', value: this.data.speed },
-                                density: { type: 'f', value: this.data.density },
-                                intensity: { type: 'f', value: this.data.intensity }
+                                map: { value: texture },
+                                time: { value: 0 },
+                                speed: { value: this.data.speed },
+                                density: { value: this.data.density },
+                                intensity: { value: this.data.intensity }
                             },
                             vertexShader: document.getElementById('vertexShader').textContent,
                             fragmentShader: document.getElementById('fragmentShader').textContent,
-                            transparent: true,
-                            alphaTest: 0.01,
-                            depthWrite: false,
-                            blending: THREE.NormalBlending
+                            transparent: true
+                            });
 
-                        this.el.object3D.children[0].material = this.material;
+                            const applyMaterial = () => {
+                                const mesh = el.getObject3D('mesh');
+                                if (mesh) {
+                                    console.log("Applying shader material");
+                                    mesh.material = this.material;
+                                } else {
+                                    console.warn("Mesh not found, retrying...");
+                                    setTimeout(applyMaterial, 100);
+                                }
+                            };
+                            
+                            el.addEventListener('model-loaded', applyMaterial);
+                            applyMaterial();
                     });
                 },
                 tick: function(time) {
@@ -114,7 +124,6 @@
                         this.material.uniforms.time.value = time / 1000;
                     }
                 },
-                }
             });
         </script>
 
@@ -124,7 +133,7 @@
             size="0.05"
         >
             <a-plane 
-                noise-effect="speed: 3.0; density: 150.0; intensity: 0.8"
+                noise-effect="speed: 3.0; density: 150.0; intensity: 3.0"
                 src="#main-texture"
                 width="10"
                 height="10"
