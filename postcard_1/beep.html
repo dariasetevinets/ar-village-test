@@ -44,7 +44,8 @@
             <script id="fragmentShader" type="x-shader/x-fragment">
                 precision mediump float;
                 uniform sampler2D map;
-                uniform float time; // Не забудьте передать из JavaScript!
+                uniform float time;
+                uniform float intensity;
                 varying vec2 vUv;
                 
                 float rand(vec2 co) {
@@ -54,17 +55,18 @@
                 void main() {
                     vec2 uv = vUv; 
                     vec4 tex = texture2D(map, uv);
-                
-                    float wave1 = sin(time * 3.0 + uv.x * 50.0) * 0.3; 
-                    float wave2 = cos(time * 2.5 + uv.y * 40.0) * 0.3;
-                    float noise = rand(vec2(uv.x * 20.0 + time, uv.y * 20.0)) * 0.4; 
                     
-                float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
-                vec3 black = vec3(0.0);
-                
-                gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
+                    // Усиленная анимация
+                    float wave1 = sin(time * 5.0 + uv.x * 100.0) * 0.4 * intensity; 
+                    float wave2 = cos(time * 4.0 + uv.y * 80.0) * 0.4 * intensity;
+                    float noise = rand(vec2(uv.x * 30.0 + time, uv.y * 30.0)) * 0.5 * intensity;
+                    
+                    float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
+                    vec3 black = vec3(0.0);
+                    
+                    gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
                 }
-</script>
+            </script>
         </a-assets>
 
         <script>
@@ -87,9 +89,8 @@
                                 uniforms: {
                                     map: { value: texture },
                                     time: { value: 0 },
-                                    intensity: { value: this.data.intensity } 
+                                    intensity: { value: this.data.intensity }
                                 },
-                            }),
                                 vertexShader: document.getElementById('vertexShader').textContent,
                                 fragmentShader: document.getElementById('fragmentShader').textContent,
                                 transparent: true
@@ -112,16 +113,19 @@
                         undefined,
                         (err) => {
                             console.error("Texture load failed:", err);
-                            // Fallback красный цвет
                             this.material = new THREE.MeshBasicMaterial({
                                 color: 0xFF0000,
                                 transparent: true
                             });
-                        },
-                            tick: function(time) {
-                                if (this.material?.uniforms?.time) {
-                                    this.material.uniforms.time.value = time / 300 * this.data.speed;
-                                },
+                        }
+                    );
+                },
+                
+                tick: function(time) {
+                    if (this.material?.uniforms?.time) {
+                        this.material.uniforms.time.value = time / 200 * this.data.speed;
+                    }
+                }
             });
         </script>
 
@@ -133,9 +137,9 @@
             <a-plane
                 width="0.41"
                 height="0.296"
-                scale="15 15 1"
                 rotation="-90 0 0"
-                custom-shader="speed: 3.0; intensity: 2.0"
+                position="0 0 0"
+                custom-shader="speed: 5.0; intensity: 3.0"
             ></a-plane>
         </a-marker>
 
