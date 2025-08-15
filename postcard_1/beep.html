@@ -44,18 +44,36 @@
             <script id="fragmentShader" type="x-shader/x-fragment">
                 precision mediump float;
                 uniform sampler2D map;
+                uniform float time; // Не забудьте передать из JavaScript!
                 varying vec2 vUv;
-
-                void main() {
-                    vec4 tex = texture2D(map, vUv);
-                    if (tex.a < 0.1) discard;
-                    gl_FragColor = tex;
+                
+                float rand(vec2 co) {
+                    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
                 }
-            </script>
+                
+                void main() {
+                    vec2 uv = vUv; 
+                    vec4 tex = texture2D(map, uv);
+                
+                    float wave1 = sin(time * 3.0 + uv.x * 50.0) * 0.3; 
+                    float wave2 = cos(time * 2.5 + uv.y * 40.0) * 0.3;
+                    float noise = rand(vec2(uv.x * 20.0 + time, uv.y * 20.0)) * 0.4; 
+                    
+                float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
+                vec3 black = vec3(0.0);
+                
+                gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
+                }
+</script>
         </a-assets>
 
         <script>
             AFRAME.registerComponent('custom-shader', {
+                schema: {
+                    speed: { type: 'number', default: 2.0 }, 
+                    intensity: { type: 'number', default: 1.5 } 
+                },
+                
                 init: function() {
                     const el = this.el;
                     const textureLoader = new THREE.TextureLoader();
@@ -67,8 +85,11 @@
                             
                             this.material = new THREE.ShaderMaterial({
                                 uniforms: {
-                                    map: { value: texture }
+                                    map: { value: texture },
+                                    time: { value: 0 },
+                                    intensity: { value: this.data.intensity } 
                                 },
+                            }),
                                 vertexShader: document.getElementById('vertexShader').textContent,
                                 fragmentShader: document.getElementById('fragmentShader').textContent,
                                 transparent: true
@@ -96,9 +117,11 @@
                                 color: 0xFF0000,
                                 transparent: true
                             });
-                        }
-                    );
-                }
+                        },
+                            tick: function(time) {
+                                if (this.material?.uniforms?.time) {
+                                    this.material.uniforms.time.value = time / 300 * this.data.speed;
+                                },
             });
         </script>
 
@@ -112,7 +135,7 @@
                 height="0.296"
                 scale="15 15 1"
                 rotation="-90 0 0"
-                custom-shader
+                custom-shader="speed: 3.0; intensity: 2.0"
             ></a-plane>
         </a-marker>
 
