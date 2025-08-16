@@ -7,7 +7,7 @@
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: transparent; }
+        body { margin: 0; overflow: hidden; }
         .status {
             position: fixed;
             bottom: 20px;
@@ -65,34 +65,6 @@
                     vec3 black = vec3(0.0);
                     
                     gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
-                }
-                
-                    //float grain = fract(sin(dot(uv, vec2(12.9898, 78.233)) * 43758.5453 + time);
-                    //grain = pow(grain, 8.0) * 2.0;
-
-                   // float combinedNoise = min(n + grain, 1.0) * intensity;
-                    // noiseColor = vec3(combinedNoise);
-                    //vec3 finalColor = tex.rgb + noiseColor * tex.a;
-                
-                    // Генерируем шум (только черно-белый)
-                    //float noise = 0.0;
-                    //float noiseSize = density * 50.0;
-                    
-                    // Создаем 3 слоя шума для объема
-                    //for (int i = 0; i < 3; i++) {
-                        //float fi = float(i);
-                        //vec2 offset = vec2(
-                            //sin(time * speed * 0.5 + fi * 10.0),
-                            //cos(time * speed * 0.3 + fi * 15.0)
-                        //) * 0.5;
-                        
-                        //noise += dotNoise(uv * 2.0 + offset, noiseSize) * 0.8;
-                    //}
-                    
-                    // Применяем шум к текстуре (без цветного эффекта)
-                    //float noiseFactor = clamp(noise * intensity, 0.0, 1.0);
-                    //vec3 finalColor = mix(tex.rgb, vec3(1.0), noiseFactor * tex.a);
-
             </script>
         </a-assets>
 
