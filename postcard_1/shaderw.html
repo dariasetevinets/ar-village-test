@@ -33,19 +33,23 @@
         <a-assets>
             <img id="main-texture" src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" crossorigin="anonymous">
             
-            <script id="vertexShader" type="x-shader/x-vertex"
+            <script id="vertexShader" type="x-shader/x-vertex">
                 varying vec2 vUv;
                 varying vec3 vPosition;
                 
-                void.main() {
-                vUv="uv";
-                vPosition="position";
-                gl_Position="projectionMatrix * modelViewMatrix * vec4(position, 1.0);"
+                void main() {
+                    vUv = uv;
+                    vPosition = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                 }
-            ></script>
+            </script>
             
-            <script id="jitterShader" type="x-shader/x-fragment"
+            <script id="jitterShader" type="x-shader/x-fragment">
+                #ifdef GL_FRAGMENT_PRECISION_HIGH
+                precision highp float;
+                #else
                 precision mediump float;
+                #endif
                 
                 uniform sampler2D map;
                 uniform float time;
@@ -53,11 +57,23 @@
                 varying vec2 vUv;
                 
                 void main() {
-                float jitter="sin(time * 10.0) * 0.05 * intensity;"
-                vec2 uv="vUv + vec2(jitter * sin(time * 2.0), jitter * cos(time * 3.0));"
-                    gl_FragColor = texture2D(map, uv);
-                    gl_FragColor.a *= 0.9 + 0.1 * sin(time * 5.0); 
-            ></script>
+                    float jitter = sin(time * 10.0) * 0.05 * intensity;
+                    vec2 uv = vUv + vec2(
+                        jitter * sin(time * 2.0 + vUv.y * 10.0),
+                        jitter * cos(time * 3.0 + vUv.x * 8.0)
+                    );
+                    
+                    // RGB split эффект для большей выразительности
+                    vec4 color = texture2D(map, uv);
+                    color.r = texture2D(map, uv + vec2(0.02 * intensity, 0.0)).r;
+                    color.g = texture2D(map, uv + vec2(0.0, 0.02 * intensity)).g;
+                    
+                    // Мерцание прозрачности
+                    color.a *= 0.8 + 0.2 * sin(time * 5.0);
+                    
+                    gl_FragColor = color;
+                }
+            </script>
         </a-assets>
         
         <script>
@@ -75,6 +91,7 @@
                         document.querySelector('#main-texture').src,
                         (texture) => {
                             texture.minFilter = THREE.LinearFilter;
+                            texture.anisotropy = 16;
                             
                             this.material = new THREE.ShaderMaterial({
                                 uniforms: {
@@ -84,14 +101,19 @@
                                 },
                                 vertexShader: document.getElementById('vertexShader').textContent,
                                 fragmentShader: document.getElementById('jitterShader').textContent,
-                                transparent: true
+                                transparent: true,
+                                defines: {
+                                    USE_MAP: true
+                                }
                             });
                             
                             const applyMaterial = () => {
                                 const mesh = el.getObject3D('mesh');
                                 if (mesh) {
                                     mesh.material = this.material;
+                                    console.log("Jitter material applied!");
                                 } else {
+                                    console.warn("Mesh not found, retrying...");
                                     setTimeout(applyMaterial, 100);
                                 }
                             };
@@ -102,12 +124,26 @@
                         undefined,
                         (err) => {
                             console.error("Texture load failed:", err);
+                            this.material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
                         }
                     );
                 },
+                
                 tick: function(time) {
                     if (this.material?.uniforms?.time) {
-                        this.material.uniforms.time.value = time / 10000 * this.data.speed;
+                        this.material.uniforms.time.value = (time % 60000) / 1000 * this.data.speed;
+                    }
+                },
+                
+                remove: function() {
+                    if (this.material) {
+                        this.material.dispose();
+                    }
+                },
+                
+                update: function(oldData) {
+                    if (this.material?.uniforms?.intensity) {
+                        this.material.uniforms.intensity.value = this.data.intensity;
                     }
                 }
             });
@@ -117,14 +153,19 @@
             type="pattern" 
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" 
             size="0.05"
+            emitevents="true"
         >
             <a-entity
                 geometry="primitive: plane; width: 8.2; height: 5.92"
                 position="0 0 0"
                 rotation="-90 0 0"
                 jitter-effect="speed: 4.0; intensity: 3.0"
-                animation="property: components.jitter-effect.data.intensity; to: 10.0; dur: 2000; loop: true; dir: alternate"
-                material="#main-texture"
+                animation="property: components.jitter-effect.data.intensity; 
+                           to: 5.0; 
+                           dur: 2000; 
+                           loop: true; 
+                           dir: alternate;
+                           easing: easeInOutQuad"
             ></a-entity>
         </a-marker>
 
@@ -141,13 +182,19 @@
                 return;
             }
 
-            scene.addEventListener('markerFound', () => {
-                statusEl.textContent = "Маркер распознан";
+            scene.addEventListener('markerFound', (e) => {
+                statusEl.textContent = "Маркер распознан: " + e.target.id;
+                console.log("Marker found:", e.detail);
             });
 
             scene.addEventListener('markerLost', () => {
                 statusEl.textContent = "Наведите камеру на маркер";
             });
+
+            // Обработка ошибок WebGL
+            window.addEventListener('webglcontextlost', () => {
+                statusEl.textContent = "Ошибка графики. Перезагрузите страницу.";
+            }, false);
         });
     </script>
 </body>
