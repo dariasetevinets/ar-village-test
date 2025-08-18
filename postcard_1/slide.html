@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>AR Experience with Jitter Effect — Fixed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    .status {
+      position: fixed; bottom: 20px; left: 0; right: 0;
+      text-align: center; color: #fff; font-family: system-ui, Arial, sans-serif;
+      background: rgba(0,0,0,.5); padding: 10px; z-index: 100;
+    }
+      .panel {
+      position: fixed; top: 12px; left: 12px;
+      background: rgba(0,0,0,.6); color: #fff; z-index: 110;
+      padding: 12px; border-radius: 12px; font: 14px/1.4 system-ui, Arial, sans-serif;
+      backdrop-filter: blur(4px);
+    }
+    .panel label { display:block; margin-top: 6px; }
+    .panel input[type="range"] { width: 220px; }
+    .panel .row { display:flex; align-items:center; gap:8px; }
+  </style>
+</head>
+<body>
+  <div class="status">Наведите камеру на маркер</div>
+
+  <div class="panel">
+    <div class="row">
+      <label for="speed">Speed <span id="speedVal">6.0</span></label>
+    </div>
+    <input type="range" id="speed" min="0" max="12" step="0.1" value="6" />
+    <div class="row">
+      <label for="intensity">Intensity <span id="intensityVal">7.0</span></label>
+    </div>
+    <input type="range" id="intensity" min="0" max="20" step="0.1" value="7" />
+    <label class="row" style="margin-top:8px;">
+      <input type="checkbox" id="animateIntensity" checked />
+      <span>Animate Intensity</span>
+    </label>
+  </div>
+
+  <!-- Assets -->
+  <a-scene
+    vr-mode-ui="enabled: false"
+    embedded
+    arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat"
+    renderer="logarithmicDepthBuffer: true;"
+  >
+    <a-assets timeout="30000">
+      <img id="main-texture" crossorigin="anonymous"
+           src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" />
+
+      <!-- Vertex Shader -->
+      <script id="vertexShader" type="x-shader/x-vertex">
+        varying vec2 vUv;
+        uniform float intensity;
+        void main () {
+          vUv = uv;
+          // Небольшая волна по вертексам (мягко, чтобы не ломать маркер)
+          float waveX = sin(position.x * 4.0) * 0.02 * intensity;
+          float waveY = cos(position.y * 3.0) * 0.02 * intensity;
+          vec3 newPosition = position + vec3(waveX, waveY, 0.0);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+        }
+      </script>
+
+      <!-- Fragment Shader (jitter) -->
+      <script id="jitterShader" type="x-shader/x-fragment">
+        #ifdef GL_FRAGMENT_PRECISION_HIGH
+          precision highp float;
+        #else
+          precision mediump float;
+        #endif
+        uniform sampler2D map;
+        uniform float time;
+        uniform float intensity;
+        varying vec2 vUv;
+        void main () {
+          // Амплитуда — маленькая, управляется intensity
+          float baseAmp = 0.015 * intensity;
+          float jitter = sin(time * 12.0) * baseAmp;
+
+          vec2 uv = vUv + vec2(
+            jitter * sin(time * 3.0 + vUv.y * 15.0),
+            jitter * cos(time * 2.5 + vUv.x * 12.0)
+          );
+
+          // Кламп, чтобы не упираться в прозрачные/одноцветные края
+          uv = clamp(uv, vec2(0.001), vec2(0.999));
+
+          vec4 color = texture2D(map, uv);
+          // Легкий RGB-split для видимости эффекта
+          color.r = texture2D(map, clamp(uv + vec2( 0.01 * intensity, 0.0), vec2(0.001), vec2(0.999))).r;
+          color.g = texture2D(map, clamp(uv + vec2( 0.0, 0.01 * intensity), vec2(0.001), vec2(0.999))).g;
+          color.b = texture2D(map, clamp(uv + vec2(-0.008 * intensity, -0.008 * intensity), vec2(0.001), vec2(0.999))).b;
+
+          // Небольшая пульсация альфы
+          color.a *= 0.85 + 0.15 * sin(time * 8.0);
+          gl_FragColor = color;
+        }
+      </script>
+    </a-assets>
+
+    <script>
+      // Компонент с безопасным применением ShaderMaterial к мешу A-Frame
+      AFRAME.registerComponent('jitter-effect', {
+        schema: {
+          speed: { type: 'number', default: 2.0 },
+          intensity: { type: 'number', default: 1.5 }
+        },
+
+        init: function () {
+          this.material = null;
+          this._time = 0;
+
+          // Готовим текстуру из <img id="main-texture">, уже загруженного в <a-assets>
+          const img = document.getElementById('main-texture');
+          if (!img || !img.complete) {
+            // Ждём ассета, если что
+            img?.addEventListener('load', () => this._buildMaterial(img));
+          } else {
+            this._buildMaterial(img);
+          }
+
+          // Применять материал, когда появится mesh
+          this.el.addEventListener('loaded', () => this._applyWhenReady());
+          this.el.addEventListener('object3dset', (e) => {
+            if (e.detail && e.detail.type === 'mesh') this._applyWhenReady();
+          });
+        },
+
+        _buildMaterial: function (imgEl) {
+          // Почему так: используем уже загруженный элемент из <a-assets> → меньше CORS/таинта
+          const texture = new THREE.Texture(imgEl);
+          texture.needsUpdate = true;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.minFilter = THREE.LinearFilter; // NPOT-safe
+          texture.magFilter = THREE.LinearFilter;
+          texture.wrapS = THREE.ClampToEdgeWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+
+          this.material = new THREE.ShaderMaterial({
+            uniforms: {
+              map: { value: texture },
+              time: { value: 0 },
+              intensity: { value: this.data.intensity }
+            },
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('jitterShader').textContent,
+            transparent: true,
+            depthWrite: false, // важно для корректного альфа-бленда в AR
+            side: THREE.DoubleSide // плоскость видна с обеих сторон
+          });
+        },
+
+        _applyWhenReady: function () {
+          const mesh = this.el.getObject3D('mesh');
+          if (!mesh || !this.material) return;
+          mesh.traverse((obj) => {
+            if (obj.isMesh) {
+              obj.material = this.material;
+              obj.material.needsUpdate = true; // важно при замене материала
+            }
+          });
+          // console.log('Jitter material applied');
+        },
+
+        tick: function (time, dt) {
+          if (!this.material) return;
+          // A-Frame даёт time в мс. Делаем накопительный счётчик (устойчивее, чем mod)
+          this._time += (dt || 0) * 0.001 * this.data.speed;
+          this.material.uniforms.time.value = this._time;
+        },
+
+        update: function (oldData) {
+          if (!this.material) return;
+          if (oldData.intensity !== this.data.intensity) {
+            this.material.uniforms.intensity.value = this.data.intensity;
+          }
+        },
+
+        remove: function () {
+          if (this.material) {
+            const tex = this.material.uniforms.map?.value;
+            this.material.dispose();
+            if (tex && tex.dispose) tex.dispose();
+            this.material = null;
+          }
+        }
+      });
+    </script>
+
+    <a-marker id="marker"
+      type="pattern"
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="art"
+        geometry="primitive: plane; width: 8.2; height: 5.92"
+        position="0 0 0"
+        rotation="-90 0 0"
+        jitter-effect="speed: 6.0; intensity: 7.0"
+        
+        /*
+          Важно: правильный путь к свойству компонента для animation —
+          НЕ components.jitter-effect.data.intensity, а jitter-effect.intensity
+        */
+        animation__intensity="property: jitter-effect.intensity; to: 12; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine"
+      ></a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // Статус теперь слушает события именно на a-marker
+    const statusEl = document.querySelector('.status');
+    const markerEl = document.getElementById('marker');
+    markerEl.addEventListener('markerFound', () => {
+      statusEl.textContent = 'Маркер распознан';
+    });
+    markerEl.addEventListener('markerLost', () => {
+      statusEl.textContent = 'Наведите камеру на маркер';
+    });
+
+    // WebGL контекст
+    window.addEventListener('webglcontextlost', () => {
+      statusEl.textContent = 'Ошибка графики. Перезагрузите страницу.';
+    }, false);
+      // === UI controls ===
+    const art = document.getElementById('art');
+    const speedInput = document.getElementById('speed');
+    const intensityInput = document.getElementById('intensity');
+    const speedVal = document.getElementById('speedVal');
+    const intensityVal = document.getElementById('intensityVal');
+    const animateChk = document.getElementById('animateIntensity');
+
+    const animDef = 'property: jitter-effect.intensity; to: 12; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine';
+
+    function setSpeed(val) {
+      const v = parseFloat(val);
+      art.setAttribute('jitter-effect', 'speed', v);
+      speedVal.textContent = v.toFixed(1);
+    }
+    function setIntensity(val) {
+      const v = parseFloat(val);
+      art.setAttribute('jitter-effect', 'intensity', v);
+      intensityVal.textContent = v.toFixed(1);
+    }
+
+    speedInput.addEventListener('input', (e)=> setSpeed(e.target.value));
+    intensityInput.addEventListener('input', (e)=> setIntensity(e.target.value));
+
+    // Toggle animation on intensity to avoid conflicts with manual control
+    function syncAnimUI() {
+      const hasAnim = art.hasAttribute('animation__intensity');
+      animateChk.checked = hasAnim;
+      intensityInput.disabled = hasAnim; // avoid fighting with animation
+    }
+    animateChk.addEventListener('change', (e)=>{
+      if (e.target.checked) {
+        art.setAttribute('animation__intensity', animDef);
+      } else {
+        art.removeAttribute('animation__intensity');
+      }
+      syncAnimUI();
+    });
+
+    // Init values to match markup
+    setSpeed(speedInput.value);
+    setIntensity(intensityInput.value);
+    syncAnimUI();
+  </script>
+</body>
+</html>
