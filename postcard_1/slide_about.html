@@ -135,7 +135,7 @@
         void main () {
           // Амплитуда — маленькая, управляется intensity
           float baseAmp = 0.015 * intensity;
-          float jitter = sin(time * 12.0) * baseAmp;
+          float jitter = sin(time * 0.05) * baseAmp;
 
           vec2 uv = vUv + vec2(
             jitter * sin(time * 3.0 + vUv.y * 15.0),
@@ -253,7 +253,7 @@
       emitevents="true"
     >
       <a-entity id="art"
-        geometry="primitive: plane; width: 1.48; height: 6.3"
+        geometry="primitive: plane; width: 4.44; height: 6.3"
         position="-1.2 0 0"
         rotation="-90 0 0"
         jitter-effect="speed: 12.0; intensity: 0.5"
