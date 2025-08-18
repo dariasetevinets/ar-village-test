@@ -44,54 +44,25 @@
                 }
             </script>
             
-            <script id="fragmentShader" type="x-shader/x-fragment">
-                precision highp float;
+            <script id="jitterShader" type="x-shader/x-fragment">
+              uniform sampler2D map;
+              uniform float time;
+              varying vec2 vUv;
                 
-                uniform sampler2D map;
-                uniform float time;
-                uniform float intensity;
-                varying vec2 vUv;
-                varying vec3 vPosition;
-
-                //	Simplex 3D Noise 
-                //	by Ian McEwan, Ashima Arts
-                vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
-                vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
-                
-                // float rand(vec2 co) {
-                    // return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-                // }
-
-                float snoise(vec3 v){ 
-                  const vec2  C = vec2(1.0/6.0, 1.0/3.0);
-                  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
-
-                  i = mod(i, 289.0); 
-                  vec4 p = permute(permute(permute( 
-                             i.z + vec4(0.0, i1.z, i2.z, 1.0))
-                           + i.y + vec4(0.0, i1.y, i2.y, 1.0)) 
-                           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-                
-
-                void main() {
-                    vec2 uv = vUv; 
-                    vec4 tex = texture2D(map, uv);
-                    
-                    // Усиленная анимация
-                    float wave1 = sin(time * 5.0 + uv.x * 100.0) * 0.4 * intensity; 
-                    float wave2 = cos(time * 4.0 + uv.y * 80.0) * 0.4 * intensity;
-                    float noise = rand(vec2(uv.x * 30.0 + time, uv.y * 30.0)) * 0.5 * intensity;
-                    
-                    float effect = (wave1 + wave2 + noise) * smoothstep(0.3, 0.8, tex.a);
-                    vec3 black = vec3(0.0);
-                    
-                    gl_FragColor = vec4(mix(tex.rgb, black, effect), tex.a);
+              void main() {
+                float jitter = sin(time * 10.0) * 0.005;
+                vec2 uv = vUv + vec2(
+                jitter * sin(time * 2.0),
+                jitter * cos(time * 3.0)
+                );
+                gl_FragColor = texture2D(map, uv);
+                gl_FragColor.a *= 0.9 + 0.1 * sin(time * 5.0); // Мерцание прозрачности
                 }
             </script>
         </a-assets>
 
         <script>
-            AFRAME.registerComponent('simplex-noise-shader', {
+            AFRAME.registerComponent('jitter-effect', {
                 schema: {
                     speed: { type: 'number', default: 2.0 }, 
                     intensity: { type: 'number', default: 1.5 } 
@@ -107,41 +78,18 @@
                             texture.minFilter = THREE.LinearFilter;
                             
                             this.material = new THREE.ShaderMaterial({
-                                uniforms: {
-                                    map: { value: texture },
-                                    time: { value: 0 },
-                                    intensity: { value: this.data.intensity }
-                                },
-                                vertexShader: document.getElementById('vertexShader').textContent,
-                                fragmentShader: document.getElementById('fragmentShader').textContent,
-                                transparent: true
+                              uniforms: {
+                                map: { value: texture },
+                                time: { value: 0 },
+                                intensity: { value: this.data.intensity }
+                              },
+                              vertexShader: document.getElementById('#standardVertShader').textContent,
+                              fragmentShader: document.getElementById('#jitterShader').textContent,
+                              transparent: true
                             });
-
-                            const applyMaterial = () => {
-                                const mesh = el.getObject3D('mesh');
-                                if (mesh) {
-                                    console.log("Applying shader material");
-                                    mesh.material = this.material;
-                                } else {
-                                    console.warn("Mesh not found, retrying...");
-                                    setTimeout(applyMaterial, 100);
-                                }
-                            };
-                            
-                            el.addEventListener('model-loaded', applyMaterial);
-                            applyMaterial();
-                        },
-                        undefined,
-                        (err) => {
-                            console.error("Texture load failed:", err);
-                            this.material = new THREE.MeshBasicMaterial({
-                                color: 0xFF0000,
-                                transparent: true
-                            });
-                        }
-                    );
+                        }),
+                        this.el.object3D.children[0].material = this.material;
                 },
-                
                 tick: function(time) {
                     if (this.material?.uniforms?.time) {
                         this.material.uniforms.time.value = time / 1000 * this.data.speed;
@@ -155,13 +103,14 @@
             url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt" 
             size="0.05"
         >
-            <a-plane
-                width="8.2"
-                height="5.92"
-                rotation="-90 0 0"
+            <a-entity
+                geometry="primitive: plane; width: 8.2; height: 5.92"
                 position="0 0 0"
-                custom-shader="speed: 5.0; intensity: 3.0"
-            ></a-plane>
+                rotation="-90 0 0"
+                jitter-effect="speed: 1.5"
+                material="shader: flat; transparent: true"
+            ></a-entity>
+            
         </a-marker>
 
         <a-entity camera></a-entity>
