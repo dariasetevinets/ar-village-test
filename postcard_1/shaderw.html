@@ -36,11 +36,17 @@
             <script id="vertexShader" type="x-shader/x-vertex">
                 varying vec2 vUv;
                 varying vec3 vPosition;
-                
+                uniform float intensity;
+    
                 void main() {
                     vUv = uv;
                     vPosition = position;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+                    float waveX = sin(position.x * 4.0) * 0.3 * intensity;
+                    float waveY = cos(position.y * 3.0) * 0.3 * intensity;
+                    vec3 newPosition = position + vec3(waveX, waveY, 0.0);
+        
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
                 }
             </script>
             
@@ -50,27 +56,27 @@
                 #else
                 precision mediump float;
                 #endif
-                
+    
                 uniform sampler2D map;
                 uniform float time;
                 uniform float intensity;
                 varying vec2 vUv;
-                
+    
                 void main() {
-                    float jitter = sin(time * 10.0) * 0.05 * intensity;
+                    float jitter = sin(time * 12.0) * 0.1 * intensity;
+
                     vec2 uv = vUv + vec2(
-                        jitter * sin(time * 2.0 + vUv.y * 10.0),
-                        jitter * cos(time * 3.0 + vUv.x * 8.0)
+                        jitter * sin(time * 3.0 + vUv.y * 15.0),
+                        jitter * cos(time * 2.5 + vUv.x * 12.0)
                     );
-                    
-                    // RGB split эффект для большей выразительности
+        
                     vec4 color = texture2D(map, uv);
-                    color.r = texture2D(map, uv + vec2(0.02 * intensity, 0.0)).r;
-                    color.g = texture2D(map, uv + vec2(0.0, 0.02 * intensity)).g;
-                    
-                    // Мерцание прозрачности
-                    color.a *= 0.8 + 0.2 * sin(time * 5.0);
-                    
+                    color.r = texture2D(map, uv + vec2(0.03 * intensity, 0.0)).r;
+                    color.g = texture2D(map, uv + vec2(0.0, 0.03 * intensity)).g;
+                    color.b = texture2D(map, uv - vec2(0.02 * intensity, 0.02 * intensity)).b;
+
+                    color.a *= 0.7 + 0.3 * sin(time * 8.0);
+        
                     gl_FragColor = color;
                 }
             </script>
@@ -159,13 +165,13 @@
                 geometry="primitive: plane; width: 8.2; height: 5.92"
                 position="0 0 0"
                 rotation="-90 0 0"
-                jitter-effect="speed: 4.0; intensity: 3.0"
-                animation="property: components.jitter-effect.data.intensity; 
-                           to: 5.0; 
-                           dur: 2000; 
-                           loop: true; 
+                jitter-effect="speed: 6.0; intensity: 7.0"
+                animation="property: components.jitter-effect.data.intensity;
+                           to: 12.0;
+                           dur: 2000;
+                           loop: true;
                            dir: alternate;
-                           easing: easeInOutQuad"
+                           easing: easeInOutElastic"
             ></a-entity>
         </a-marker>
 
