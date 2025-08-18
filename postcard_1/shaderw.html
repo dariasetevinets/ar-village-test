@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>AR Experience</title>
+    <title>AR Experience with Simplex Noise</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -35,23 +35,44 @@
             
             <script id="vertexShader" type="x-shader/x-vertex">
                 varying vec2 vUv;
+                varying vec3 vPosition;
+                
                 void main() {
                     vUv = uv;
+                    vPosition = position;
                     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                 }
             </script>
             
             <script id="fragmentShader" type="x-shader/x-fragment">
-                precision mediump float;
+                precision highp float;
+                
                 uniform sampler2D map;
                 uniform float time;
                 uniform float intensity;
                 varying vec2 vUv;
+                varying vec3 vPosition;
+
+                //	Simplex 3D Noise 
+                //	by Ian McEwan, Ashima Arts
+                vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+                vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
                 
-                float rand(vec2 co) {
-                    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-                }
+                // float rand(vec2 co) {
+                    // return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+                // }
+
+                float snoise(vec3 v){ 
+                  const vec2  C = vec2(1.0/6.0, 1.0/3.0);
+                  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+
+                  i = mod(i, 289.0); 
+                  vec4 p = permute(permute(permute( 
+                             i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                           + i.y + vec4(0.0, i1.y, i2.y, 1.0)) 
+                           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
                 
+
                 void main() {
                     vec2 uv = vUv; 
                     vec4 tex = texture2D(map, uv);
@@ -70,7 +91,7 @@
         </a-assets>
 
         <script>
-            AFRAME.registerComponent('custom-shader', {
+            AFRAME.registerComponent('simplex-noise-shader', {
                 schema: {
                     speed: { type: 'number', default: 2.0 }, 
                     intensity: { type: 'number', default: 1.5 } 
@@ -123,7 +144,7 @@
                 
                 tick: function(time) {
                     if (this.material?.uniforms?.time) {
-                        this.material.uniforms.time.value = time / 10000 * this.data.speed;
+                        this.material.uniforms.time.value = time / 1000 * this.data.speed;
                     }
                 }
             });
