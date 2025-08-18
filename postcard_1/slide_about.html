@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>AR Experience with Jitter Effect — Fixed</title>
+  <title>Сетевинец Дарья х TwinПлес</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -62,7 +62,7 @@
     .about-panel.hidden { display: none; }
     .about-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
     .about-close { background: none; border: 0; color: #fff; font-size: 20px; line-height: 1; cursor: pointer; padding: 4px; }
-    .about-content { font: 14px/1.45 system-ui, Arial, sans-serif; opacity: .95; }
+    .about-content { font: 14px/1.45 system-ui, Arial, Helvetica, sans-serif; opacity: .95; }
     .about-content a { color: #a5d8ff; text-decoration: underline; }
   </style>
 </head>
@@ -84,23 +84,21 @@
     </label>
   </div>
 
-  <div class="title" id="title">AR Jitter — наведите камеру на маркер</div>
-  <div class="work-name hidden" id="workName">Название работы</div>
+  <div class="title" id="title">Наведите камеру на маркер</div>
+  <div class="work-name hidden" id="workName">index_1, 2024</div>
 
-  <button class="about-btn" id="aboutBtn" type="button">о проекте</button>
+  <button class="about-btn" id="aboutBtn" type="button">about</button>
   <div class="about-panel hidden" id="aboutPanel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
     <div class="about-header">
-      <strong id="aboutTitle">О проекте</strong>
       <button id="aboutClose" class="about-close" aria-label="Закрыть">×</button>
     </div>
     <div class="about-content">
-      <p><strong>Название:</strong> <span id="aboutWorkName">Название работы</span></p>
-      <p><strong>Автор:</strong> Укажите автора</p>
-      <p><strong>Описание:</strong> Короткое описание проекта. Отредактируйте этот блок по своему усмотрению.</p>
+      <p><strong>Рисунок:</strong> <span id="aboutWorkName">index_1, 2024</span></p>
+      <p><strong>Автор:</strong> рисунок</p>
+      <p><strong>Описание:</strong> </p>
     </div>
   </div>
 
-  <!-- Assets -->
   <a-scene
     vr-mode-ui="enabled: false"
     embedded
@@ -111,7 +109,6 @@
       <img id="main-texture" crossorigin="anonymous"
            src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" />
 
-      <!-- Vertex Shader -->
       <script id="vertexShader" type="x-shader/x-vertex">
         varying vec2 vUv;
         uniform float intensity;
@@ -125,7 +122,6 @@
         }
       </script>
 
-      <!-- Fragment Shader (jitter) -->
       <script id="jitterShader" type="x-shader/x-fragment">
         #ifdef GL_FRAGMENT_PRECISION_HIGH
           precision highp float;
@@ -163,7 +159,6 @@
     </a-assets>
 
     <script>
-      // Компонент с безопасным применением ShaderMaterial к мешу A-Frame
       AFRAME.registerComponent('jitter-effect', {
         schema: {
           speed: { type: 'number', default: 2.0 },
@@ -258,15 +253,10 @@
       emitevents="true"
     >
       <a-entity id="art"
-        geometry="primitive: plane; width: 8.2; height: 5.92"
-        position="0 0 0"
+        geometry="primitive: plane; width: 6.3; height: 1.48"
+        position="-1 0 0"
         rotation="-90 0 0"
-        jitter-effect="speed: 6.0; intensity: 7.0"
-        
-        /*
-          Важно: правильный путь к свойству компонента для animation —
-          НЕ components.jitter-effect.data.intensity, а jitter-effect.intensity
-        */
+        jitter-effect="speed: 12.0; intensity: 0.5"
         animation__intensity="property: jitter-effect.intensity; to: 12; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine"
       ></a-entity>
     </a-marker>
@@ -354,7 +344,6 @@
       syncAnimUI();
     });
 
-    // Init values to match markup
     setSpeed(speedInput.value);
     setIntensity(intensityInput.value);
     syncAnimUI();
