@@ -23,6 +23,60 @@
 </head>
 <body>
     <div class="status">Наведите камеру на маркер</div>
+
+    <script>
+        AFRAME.registerComponent('jitter-effect', {
+            schema: {
+                speed: { type: 'number', default: 2.0 }, 
+                intensity: { type: 'number', default: 1.5 } 
+            },
+                
+            init: function() {
+                const el = this.el;
+                const textureLoader = new THREE.TextureLoader();
+                    
+                textureLoader.load(
+                    document.querySelector('#main-texture').src,
+                    (texture) => {
+                        texture.minFilter = THREE.LinearFilter;
+                            
+                        this.material = new THREE.ShaderMaterial({
+                            uniforms: {
+                                map: { value: texture },
+                                time: { value: 0 },
+                                intensity: { value: this.data.intensity }
+                            },
+                            vertexShader: document.getElementById('vertexShader').textContent,
+                            fragmentShader: document.getElementById('jitterShader').textContent,
+                            transparent: true
+                        });
+
+                        const applyMaterial = () => {
+                            const mesh = el.getObject3D('mesh');
+                            if (mesh) {
+                                mesh.material = this.material;
+                            } else {
+                                setTimeout(applyMaterial, 100);
+                             }
+                        };
+                            
+                        el.addEventListener('model-loaded', applyMaterial);
+                        applyMaterial();
+                    },
+                    undefined,
+                    (err) => {
+                        console.error("Texture load failed:", err);
+                    }
+                );
+            },
+                
+            tick: function(time) {
+                if (this.material?.uniforms?.time) {
+                    this.material.uniforms.time.value = time / 1000 * this.data.speed;
+                }
+            }
+        });
+    </script>
     
     <a-scene
         vr-mode-ui="enabled: false"
@@ -64,59 +118,7 @@
             </script>
         </a-assets>
 
-        <script>
-            AFRAME.registerComponent('jitter-effect', {
-                schema: {
-                    speed: { type: 'number', default: 2.0 }, 
-                    intensity: { type: 'number', default: 1.5 } 
-                },
-                
-                init: function() {
-                    const el = this.el;
-                    const textureLoader = new THREE.TextureLoader();
-                    
-                    textureLoader.load(
-                        document.querySelector('#main-texture').src,
-                        (texture) => {
-                            texture.minFilter = THREE.LinearFilter;
-                            
-                            this.material = new THREE.ShaderMaterial({
-                                uniforms: {
-                                    map: { value: texture },
-                                    time: { value: 0 },
-                                    intensity: { value: this.data.intensity }
-                                },
-                                vertexShader: document.getElementById('vertexShader').textContent,
-                                fragmentShader: document.getElementById('jitterShader').textContent,
-                                transparent: true
-                            });
 
-                            const applyMaterial = () => {
-                                const mesh = el.getObject3D('mesh');
-                                if (mesh) {
-                                    mesh.material = this.material;
-                                } else {
-                                    setTimeout(applyMaterial, 100);
-                                }
-                            };
-                            
-                            el.addEventListener('model-loaded', applyMaterial);
-                            applyMaterial();
-                        },
-                        undefined,
-                        (err) => {
-                            console.error("Texture load failed:", err);
-                        }
-                    );
-                },
-                
-                tick: function(time) {
-                    if (this.material?.uniforms?.time) {
-                        this.material.uniforms.time.value = time / 1000 * this.data.speed;
-                    }
-                }
-            });
-        </script>
 
         <a-marker 
             type="pattern" 
