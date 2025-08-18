@@ -72,7 +72,7 @@
                 
             tick: function(time) {
                 if (this.material?.uniforms?.time) {
-                    this.material.uniforms.time.value = time / 1000 * this.data.speed;
+                    this.material.uniforms.time.value = time / 10000 * this.data.speed;
                 }
             }
         });
@@ -107,7 +107,7 @@
                 varying vec2 vUv;
                 
                 void main() {
-                    float jitter = sin(time * 10.0) * 0.005 * intensity;
+                    float jitter = sin(time * 10.0) * 0.05 * intensity;
                     vec2 uv = vUv + vec2(
                         jitter * sin(time * 2.0),
                         jitter * cos(time * 3.0)
@@ -130,7 +130,7 @@
                 position="0 0 0"
                 rotation="-90 0 0"
                 jitter-effect="speed: 4.0; intensity: 3.0"
-                animation="property: components.jitter-effect.data.intensity; to: 3.0; dur: 2000; loop: true; dir: alternate"
+                animation="property: components.jitter-effect.data.intensity; to: 10.0; dur: 2000; loop: true; dir: alternate"
                 material="#main-texture"
             ></a-entity>
         </a-marker>
