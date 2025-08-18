@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>AR Experience with Simplex Noise</title>
+    <title>AR Experience with Jitter Effect</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
@@ -45,18 +45,21 @@
             </script>
             
             <script id="jitterShader" type="x-shader/x-fragment">
-              uniform sampler2D map;
-              uniform float time;
-              varying vec2 vUv;
+                precision mediump float;
                 
-              void main() {
-                float jitter = sin(time * 10.0) * 0.005;
-                vec2 uv = vUv + vec2(
-                jitter * sin(time * 2.0),
-                jitter * cos(time * 3.0)
-                );
-                gl_FragColor = texture2D(map, uv);
-                gl_FragColor.a *= 0.9 + 0.1 * sin(time * 5.0); // Мерцание прозрачности
+                uniform sampler2D map;
+                uniform float time;
+                uniform float intensity;
+                varying vec2 vUv;
+                
+                void main() {
+                    float jitter = sin(time * 10.0) * 0.005 * intensity;
+                    vec2 uv = vUv + vec2(
+                        jitter * sin(time * 2.0),
+                        jitter * cos(time * 3.0)
+                    );
+                    gl_FragColor = texture2D(map, uv);
+                    gl_FragColor.a *= 0.9 + 0.1 * sin(time * 5.0); // Мерцание прозрачности
                 }
             </script>
         </a-assets>
@@ -78,18 +81,35 @@
                             texture.minFilter = THREE.LinearFilter;
                             
                             this.material = new THREE.ShaderMaterial({
-                              uniforms: {
-                                map: { value: texture },
-                                time: { value: 0 },
-                                intensity: { value: this.data.intensity }
-                              },
-                              vertexShader: document.getElementById('#standardVertShader').textContent,
-                              fragmentShader: document.getElementById('#jitterShader').textContent,
-                              transparent: true
+                                uniforms: {
+                                    map: { value: texture },
+                                    time: { value: 0 },
+                                    intensity: { value: this.data.intensity }
+                                },
+                                vertexShader: document.getElementById('vertexShader').textContent,
+                                fragmentShader: document.getElementById('jitterShader').textContent,
+                                transparent: true
                             });
-                        }),
-                        this.el.object3D.children[0].material = this.material;
+
+                            const applyMaterial = () => {
+                                const mesh = el.getObject3D('mesh');
+                                if (mesh) {
+                                    mesh.material = this.material;
+                                } else {
+                                    setTimeout(applyMaterial, 100);
+                                }
+                            };
+                            
+                            el.addEventListener('model-loaded', applyMaterial);
+                            applyMaterial();
+                        },
+                        undefined,
+                        (err) => {
+                            console.error("Texture load failed:", err);
+                        }
+                    );
                 },
+                
                 tick: function(time) {
                     if (this.material?.uniforms?.time) {
                         this.material.uniforms.time.value = time / 1000 * this.data.speed;
@@ -107,10 +127,8 @@
                 geometry="primitive: plane; width: 8.2; height: 5.92"
                 position="0 0 0"
                 rotation="-90 0 0"
-                jitter-effect="speed: 1.5"
-                material="shader: flat; transparent: true"
+                jitter-effect="speed: 1.5; intensity: 1.0"
             ></a-entity>
-            
         </a-marker>
 
         <a-entity camera></a-entity>
@@ -121,14 +139,17 @@
             const statusEl = document.querySelector('.status');
             const scene = document.querySelector('a-scene');
             
+            if (!scene) {
+                console.error('A-Frame scene not found');
+                return;
+            }
+
             scene.addEventListener('markerFound', () => {
                 statusEl.textContent = "Маркер распознан";
-                console.log("Marker found");
             });
 
             scene.addEventListener('markerLost', () => {
                 statusEl.textContent = "Наведите камеру на маркер";
-                console.log("Marker lost");
             });
         });
     </script>
