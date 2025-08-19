@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="UTF-8" />
-  <title>Сетевинец Дарья х TwinПлес</title>
+  <title>AR Experience with Jitter Effect — Fixed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js">
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<script>
 function fadeReplaceText(id, newText) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -89,7 +90,7 @@ function fadeReplaceText(id, newText) {
 </head>
 <body>
   <div class="status">Наведите камеру на маркер</div>
-  <div class="title fade-text" id="title">Сетевинец Дарья х TwinПлес</div>
+  <div class="title fade-text" id="title">AR Jitter — наведите камеру на маркер</div>
   <div class="work-name hidden fade-text" id="workName">Название работы</div>
 
   <button class="about-btn" id="aboutBtn" type="button">о проекте</button>
@@ -287,13 +288,13 @@ function fadeReplaceText(id, newText) {
     let userLang = localStorage.getItem('ar-lang') || (navigator.language.startsWith('en') ? 'en' : 'ru');
 
 const POSTCARDS = [
-  { id: 'pc1', title: 'Открытка 1', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 6.0, intensity: 0.5 }, author: { ru: '$1', en: 'Author of $1' }, description: { ru: '$2', en: 'Description of $2' } },
-  { id: 'pc2', title: 'Открытка 2', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-2.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 4.0, intensity: 1.0 }, author: 'Автор 2', description: 'Описание открытки 2' },
-  { id: 'pc3', title: 'Открытка 3', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-3.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-3.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 2.0, intensity: 2.0 }, author: 'Автор 3', description: 'Описание открытки 3' },
-  { id: 'pc4', title: 'Открытка 4', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-4.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-4.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 1.5, intensity: 0.8 }, author: 'Автор 4', description: 'Описание открытки 4' },
-  { id: 'pc5', title: 'Открытка 5', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-5.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-5.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 3.5, intensity: 1.2 }, author: 'Автор 5', description: 'Описание открытки 5' },
-  { id: 'pc6', title: 'Открытка 6', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-6.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-6.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 2.5, intensity: 0.6 }, author: 'Автор 6', description: 'Описание открытки 6' },
-  { id: 'pc7', title: 'Открытка 7', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-7.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-7.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 5.0, intensity: 1.0 }, author: 'Автор 7', description: 'Описание открытки 7' },
+  { id: 'pc1', title: 'Открытка 1', pattUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt', imgUrl: 'https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 6.0, intensity: 0.5 }, author: { ru: 'Дарья Сетевинец', en: 'Daria Setevinets' }, description: { ru: 'Описание первой открытки', en: 'First postcard description' } },
+  { id: 'pc2', title: 'Открытка 2', pattUrl: 'REPLACE_WITH_YOUR_PATTERN_2.patt', imgUrl: 'REPLACE_WITH_YOUR_IMAGE_2.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 4.0, intensity: 1.0 }, author: 'Автор 2', description: 'Описание открытки 2' },
+  { id: 'pc3', title: 'Открытка 3', pattUrl: 'REPLACE_WITH_YOUR_PATTERN_3.patt', imgUrl: 'REPLACE_WITH_YOUR_IMAGE_3.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 2.0, intensity: 2.0 }, author: 'Автор 3', description: 'Описание открытки 3' },
+  { id: 'pc4', title: 'Открытка 4', pattUrl: 'REPLACE_WITH_YOUR_PATTERN_4.patt', imgUrl: 'REPLACE_WITH_YOUR_IMAGE_4.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 1.5, intensity: 0.8 }, author: 'Автор 4', description: 'Описание открытки 4' },
+  { id: 'pc5', title: 'Открытка 5', pattUrl: 'REPLACE_WITH_YOUR_PATTERN_5.patt', imgUrl: 'REPLACE_WITH_YOUR_IMAGE_5.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 3.5, intensity: 1.2 }, author: 'Автор 5', description: 'Описание открытки 5' },
+  { id: 'pc6', title: 'Открытка 6', pattUrl: 'REPLACE_WITH_YOUR_PATTERN_6.patt', imgUrl: 'REPLACE_WITH_YOUR_IMAGE_6.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 2.5, intensity: 0.6 }, author: 'Автор 6', description: 'Описание открытки 6' },
+  { id: 'pc7', title: 'Открытка 7', pattUrl: 'REPLACE_WITH_YOUR_PATTERN_7.patt', imgUrl: 'REPLACE_WITH_YOUR_IMAGE_7.png', width: 8.2, height: 5.92, size: 0.05, position: '0 0 0', rotation: '-90 0 0', jitter: { speed: 5.0, intensity: 1.0 }, author: 'Автор 7', description: 'Описание открытки 7' },
 ];
 
     // Загружаем текстуры в <a-assets>
@@ -336,7 +337,7 @@ const POSTCARDS = [
       const smoothed = document.createElement('a-entity');
       smoothed.setAttribute('id', `smoothed-${pc.id}`);
       smoothed.setAttribute('smoothed-controls', `source: #marker-${pc.id}; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6`);
-      sceneEl.appendChild(smoothed);
+      marker.appendChild(smoothed);
 
       // Контент открытки
       const art = document.createElement('a-entity');
@@ -405,7 +406,8 @@ function updateLabels() {
     labelDesc: 'Описание:',
     markerFound: 'Маркер распознан',
     markerLost: 'Наведите камеру на маркер',
-    webglError: 'Ошибка графики. Перезагрузите страницу.'
+    webglError: 'Ошибка графики. Перезагрузите страницу.',
+    aboutBtn: 'о проекте'
   },
   en: {
     aboutTitle: 'About',
@@ -414,16 +416,10 @@ function updateLabels() {
     labelDesc: 'Description:',
     markerFound: 'Marker detected',
     markerLost: 'Point your camera at the marker',
-    webglError: 'Graphics error. Please reload the page.'
+    webglError: 'Graphics error. Please reload the page.',
+    aboutBtn: 'about project'
   }
-},
-    en: {
-      aboutTitle: 'About',
-      labelTitle: 'Title:',
-      labelAuthor: 'Author:',
-      labelDesc: 'Description:'
-    }
-  };
+};
   const d = dict[userLang];
   fadeReplaceText('aboutTitle', d.aboutTitle);
   fadeReplaceText('labelTitle', d.labelTitle);
@@ -439,3 +435,4 @@ function updateLabels() {
 updateLabels();</script>
 </body>
 </html>
+
