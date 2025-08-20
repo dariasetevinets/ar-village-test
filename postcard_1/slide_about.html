@@ -426,5 +426,30 @@
       statusEl.textContent = 'Ошибка графики. Перезагрузите страницу.';
     }, false);
   </script>
+  <script>
+  function updateAboutPanelPosition() {
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    const aboutBtn = document.getElementById('aboutBtn');
+    const aboutPanel = document.getElementById('aboutPanel');
+
+    if (!aboutBtn || !aboutPanel) return;
+
+    if (isLandscape) {
+      aboutBtn.style.top = '12px';
+      aboutBtn.style.left = '12px';
+      aboutPanel.style.top = '56px';
+      aboutPanel.style.left = '12px';
+    } else {
+      aboutBtn.style.top = '16px';
+      aboutBtn.style.left = '16px';
+      aboutPanel.style.top = '64px';
+      aboutPanel.style.left = '16px';
+    }
+  }
+
+  window.addEventListener('orientationchange', updateAboutPanelPosition);
+  window.addEventListener('resize', updateAboutPanelPosition);
+  window.addEventListener('load', updateAboutPanelPosition);
+</script>
 </body>
 </html>
