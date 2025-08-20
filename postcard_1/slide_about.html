@@ -156,7 +156,7 @@
           this._time = 0;
 
           // Готовим текстуру из <img id="main-texture">, уже загруженного в <a-assets>
-          const img = document.getElementById('main-texture');
+          const img = document.getElementById(this.data.texId);
           if (!img || !img.complete) {
             // Ждём ассета, если что
             img?.addEventListener('load', () => this._buildMaterial(img));
@@ -232,15 +232,15 @@
       });
     </script>
 
-    <a-marker id="marker"
+    <a-marker id="marker1"
       type="pattern"
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-1.patt"
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art"
+      <a-entity id="smoothed1"
+        smoothed-controls="source: #marker1; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art1"
           geometry="primitive: plane; width: 5.5; height: 3.5"
           position="-2.0 0 -1.2"
           rotation="-90 0 0"
@@ -250,15 +250,15 @@
         </a-entity>
     </a-marker>
     
-    <a-marker id="marker" 
+    <a-marker id="marker2" 
       type="pattern" 
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt"
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art"
+      <a-entity id="smoothed2"
+        smoothed-controls="source: #marker2; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art2"
           geometry="primitive: plane; width: 8.2; height: 5.92"
           position="-2.0 0 -1.0" 
           rotation="-90 0 0"
@@ -267,15 +267,15 @@
       </a-entity>
     </a-marker>
     
-    <a-marker id="marker"
+    <a-marker id="marker3"
       type="pattern" 
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-3.patt" 
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art" 
+      <a-entity id="smoothed3"
+        smoothed-controls="source: #marker3; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art3" 
           geometry="primitive: plane; width: 8.2; height: 5.92"
           position="-2.0 0 -1.0" 
           rotation="-90 0 0"
@@ -284,15 +284,15 @@
       </a-entity>
     </a-marker>
     
-    <a-marker id="marker"
+    <a-marker id="marker4"
       type="pattern"
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-4.patt" 
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art"
+      <a-entity id="smoothed4"
+        smoothed-controls="source: #marker4; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art4"
           geometry="primitive: plane; width: 8.2; height: 5.92"
           position="-2.0 0 -1.0" 
           rotation="-90 0 0"
@@ -301,15 +301,15 @@
       </a-entity>
     </a-marker>
     
-    <a-marker id="marker"
+    <a-marker id="marker5"
       type="pattern" 
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-5.patt" 
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art"
+      <a-entity id="smoothed5"
+        smoothed-controls="source: #marker5; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art5"
           geometry="primitive: plane; width: 8.2; height: 5.92"
           position="-2.0 0 -1.0" 
           rotation="-90 0 0"
@@ -318,15 +318,15 @@
       </a-entity>
     </a-marker>
     
-    <a-marker id="marker"
+    <a-marker id="marker6"
       type="pattern" 
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-6.patt" 
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art"
+      <a-entity id="smoothed6"
+        smoothed-controls="source: #marker6; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art6"
           geometry="primitive: plane; width: 8.2; height: 5.92"
           position="-2.0 0 -1.0" 
           rotation="-90 0 0"
@@ -335,15 +335,15 @@
       </a-entity>
     </a-marker>
     
-    <a-marker id="marker"
+    <a-marker id="marker7"
       type="pattern" 
       url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-7.patt" 
       size="0.05"
       emitevents="true"
     >
-      <a-entity id="smoothed"
-        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
-        <a-entity id="art"
+      <a-entity id="smoothed7"
+        smoothed-controls="source: #marker7; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art7"
           geometry="primitive: plane; width: 8.2; height: 5.92"
           position="-2.0 0 -1.0" 
           rotation="-90 0 0"
