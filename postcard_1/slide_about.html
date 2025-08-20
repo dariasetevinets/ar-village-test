@@ -413,60 +413,68 @@
   </a-scene>
 
   <script>
-    // Статус теперь слушает события именно на a-marker
-    const statusEl = document.querySelector('.status');
-    const markerEl = document.getElementById('marker');
-    const titleEl = document.getElementById('title');
-    const workNameEl = document.getElementById('workName');
+  function updateAboutPanelPosition() {
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    const aboutBtn = document.getElementById('aboutBtn');
+    const aboutPanel = document.getElementById('aboutPanel');
 
+    if (!aboutBtn || !aboutPanel) return;
+
+    if (isLandscape) {
+      aboutBtn.style.top = '12px';
+      aboutBtn.style.left = '12px';
+      aboutPanel.style.top = '56px';
+      aboutPanel.style.left = '12px';
+    } else {
+      aboutBtn.style.top = '16px';
+      aboutBtn.style.left = '16px';
+      aboutPanel.style.top = '64px';
+      aboutPanel.style.left = '16px';
+    }
+  }
+
+  function openAbout() {
+    document.getElementById('aboutPanel')?.classList.remove('hidden');
+  }
+
+  function closeAbout() {
+    document.getElementById('aboutPanel')?.classList.add('hidden');
+  }
+
+  window.addEventListener('orientationchange', updateAboutPanelPosition);
+  window.addEventListener('resize', updateAboutPanelPosition);
+  window.addEventListener('load', updateAboutPanelPosition);
+
+  window.addEventListener('DOMContentLoaded', () => {
     const aboutBtn = document.getElementById('aboutBtn');
     const aboutPanel = document.getElementById('aboutPanel');
     const aboutClose = document.getElementById('aboutClose');
-    const aboutWorkName = document.getElementById('aboutWorkName');
 
-    function showWorkName() { workNameEl?.classList.remove('hidden'); }
-    function hideWorkName() { workNameEl?.classList.add('hidden'); }
+    aboutBtn?.addEventListener('click', () => {
+      const hidden = aboutPanel?.classList.contains('hidden');
+      if (hidden) openAbout(); else closeAbout();
+    });
 
-    function openAbout() { aboutPanel?.classList.remove('hidden'); }
-    function updateAboutPanelPosition() {
-      const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-      const aboutBtn = document.getElementById('aboutBtn');
-      const aboutPanel = document.getElementById('aboutPanel');
+    aboutClose?.addEventListener('click', closeAbout);
 
-      if (!aboutBtn || !aboutPanel) return;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAbout();
+    });
 
-      if (isLandscape) {
-        aboutBtn.style.top = '12px';
-        aboutBtn.style.left = '12px';
-        aboutPanel.style.top = '56px';
-        aboutPanel.style.left = '12px';
-      } else {
-        aboutBtn.style.top = '16px';
-        aboutBtn.style.left = '16px';
-        aboutPanel.style.top = '64px';
-        aboutPanel.style.left = '16px';
-      }
-    }
-    window.addEventListener('orientationchange', updateAboutPanelPosition);
-    window.addEventListener('resize', updateAboutPanelPosition);
-    window.addEventListener('load', updateAboutPanelPosition);
-    function closeAbout() { aboutPanel?.classList.add('hidden'); }
-    
-    window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a-marker').forEach(marker => {
       marker.addEventListener('markerFound', () => {
         const name = marker.dataset.workName || '';
-        const author = marker.dataset.author || '';
         const medium = marker.dataset.medium || '';
+        const author = marker.dataset.author || '';
         const coordinates = marker.dataset.coordinates || '';
-        
+
         document.getElementById('workName').textContent = name;
         document.getElementById('aboutWorkName').textContent = name;
         document.querySelector('.about-content').innerHTML = `
-          <p><strong>nzvn</strong> ${name}</p>
-          <p><strong>kt</strong> ${author}</p>
-          <p><strong>md</strong> ${medium}</p>
-          <p><strong>crdnts</strong> ${coordinates}</p>
+          <p><strong>Название</strong>: ${name}</p>
+          <p><strong>Автор</strong>: ${author}</p>
+          <p><strong>Медиум</strong>: ${medium}</p>
+          <p><strong>Координаты</strong>: ${coordinates}</p>
         `;
 
         document.getElementById('workName')?.classList.remove('hidden');
@@ -478,17 +486,14 @@
         document.getElementById('workName')?.classList.add('hidden');
         document.getElementById('title')?.classList.remove('hidden');
         document.querySelector('.status').textContent = 'Наведите камеру на маркер';
-        
-        aboutBtn?.addEventListener('click', () => {
-          const hidden = aboutPanel?.classList.contains('hidden');
-          if (hidden) openAbout(); else closeAbout();
-        });
-        
-        aboutClose?.addEventListener('click', closeAbout);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAbout(); });
-        window.addEventListener('webglcontextlost', () => {
-          statusEl.textContent = 'Ошибка графики. Перезагрузите страницу.';
-        }, false);
-  </script>
+        closeAbout();
+      });
+    });
+
+    window.addEventListener('webglcontextlost', () => {
+      document.querySelector('.status').textContent = 'Ошибка графики. Перезагрузите страницу.';
+    }, false);
+  });
+</script>
 </body>
 </html>
