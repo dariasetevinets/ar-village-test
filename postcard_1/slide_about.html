@@ -80,8 +80,21 @@
     renderer="logarithmicDepthBuffer: true;"
   >
     <a-assets timeout="30000">
-      <img id="main-texture" crossorigin="anonymous"
+      <img id="main-texture1" crossorigin="anonymous"
            src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-1.png" />
+      <img id="main-texture2" crossorigin="anonymous"
+        src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-2.png" />
+      <img id="main-texture3" crossorigin="anonymous" 
+        src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-3.png" />
+      <img id="main-texture4" crossorigin="anonymous" 
+        src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-4.png" />
+      <img id="main-texture5" crossorigin="anonymous"
+        src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-5.png" />
+      <img id="main-texture6" crossorigin="anonymous" 
+        src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-6.png" />
+      <img id="main-texture7" crossorigin="anonymous" 
+        src="https://dariasetevinets.github.io/ar-village-test/assets/drawings/setevinets_index-7.png" />
+
 
       <script id="vertexShader" type="x-shader/x-vertex">
         varying vec2 vUv;
@@ -236,7 +249,109 @@
           ></a-entity>
         </a-entity>
     </a-marker>
-
+    
+    <a-marker id="marker" 
+      type="pattern" 
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-2.patt"
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="smoothed"
+        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art"
+          geometry="primitive: plane; width: 8.2; height: 5.92"
+          position="-2.0 0 -1.0" 
+          rotation="-90 0 0"
+          jitter-effect="speed: 4.0; intensity: 1.0"
+        ></a-entity>
+      </a-entity>
+    </a-marker>
+    
+    <a-marker id="marker"
+      type="pattern" 
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-3.patt" 
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="smoothed"
+        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art" 
+          geometry="primitive: plane; width: 8.2; height: 5.92"
+          position="-2.0 0 -1.0" 
+          rotation="-90 0 0"
+          jitter-effect="speed: 4.0; intensity: 1.0" //texId: tex-pc3
+        ></a-entity>
+      </a-entity>
+    </a-marker>
+    
+    <a-marker id="marker"
+      type="pattern"
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-4.patt" 
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="smoothed"
+        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art"
+          geometry="primitive: plane; width: 8.2; height: 5.92"
+          position="-2.0 0 -1.0" 
+          rotation="-90 0 0"
+          jitter-effect="speed: 4.0; intensity: 1.0"
+        ></a-entity>
+      </a-entity>
+    </a-marker>
+    
+    <a-marker id="marker"
+      type="pattern" 
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-5.patt" 
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="smoothed"
+        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art"
+          geometry="primitive: plane; width: 8.2; height: 5.92"
+          position="-2.0 0 -1.0" 
+          rotation="-90 0 0"
+          jitter-effect="speed: 4.0; intensity: 1.0"
+        ></a-entity>
+      </a-entity>
+    </a-marker>
+    
+    <a-marker id="marker"
+      type="pattern" 
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-6.patt" 
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="smoothed"
+        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art"
+          geometry="primitive: plane; width: 8.2; height: 5.92"
+          position="-2.0 0 -1.0" 
+          rotation="-90 0 0"
+          jitter-effect="speed: 4.0; intensity: 1.0"
+        ></a-entity>
+      </a-entity>
+    </a-marker>
+    
+    <a-marker id="marker"
+      type="pattern" 
+      url="https://dariasetevinets.github.io/ar-village-test/assets/patterns/sdxtp-7.patt" 
+      size="0.05"
+      emitevents="true"
+    >
+      <a-entity id="smoothed"
+        smoothed-controls="source: #marker; lerp-position: 0.6; lerp-rotation: 0.3; lerp-scale: 0.6">
+        <a-entity id="art"
+          geometry="primitive: plane; width: 8.2; height: 5.92"
+          position="-2.0 0 -1.0" 
+          rotation="-90 0 0"
+          jitter-effect="speed: 4.0; intensity: 1.0"
+        ></a-entity>
+      </a-entity>
+    </a-marker>
+    
     <a-entity camera></a-entity>
   </a-scene>
 
