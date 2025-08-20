@@ -37,17 +37,36 @@
 
     /* About button & panel */
     .about-btn {
-      position: fixed; right: 16px; bottom: 32px; z-index: 130;
-      background: rgba(0,0,0,.75); color: #fff; border: 0; border-radius: 999px;
-      padding: 12px 14px; font: 500 14px/1 system-ui, Arial, Helvetica, sans-serif; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0,0,0,.3);
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    bottom: auto;
+    z-index: 130;
+    background: rgba(0,0,0,.75);
+    color: #fff;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 14px;
+    font: 500 14px/1 system-ui, Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
     }
     .about-btn:active { transform: translateY(1px); }
 
     .about-panel {
-      position: fixed; right: 16px; bottom: 64px; width: min(90vw, 320px);
-      background: rgba(0,0,0,.85); color: #fff; z-index: 140; border-radius: 12px; padding: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.35); backdrop-filter: blur(6px);
+    position: fixed;
+    top: 64px;
+    left: 16px;
+    right: auto;
+    bottom: auto;
+    width: min(90vw, 320px);
+    background: rgba(0,0,0,.85);
+    color: #fff;
+    z-index: 140;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    backdrop-filter: blur(6px);
     }
     .about-panel.hidden { display: none; }
     .about-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
