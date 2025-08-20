@@ -428,56 +428,67 @@
     function hideWorkName() { workNameEl?.classList.add('hidden'); }
 
     function openAbout() { aboutPanel?.classList.remove('hidden'); }
-    function closeAbout() { aboutPanel?.classList.add('hidden'); }
+    function updateAboutPanelPosition() {
+      const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+      const aboutBtn = document.getElementById('aboutBtn');
+      const aboutPanel = document.getElementById('aboutPanel');
 
-    if (aboutWorkName && workNameEl) aboutWorkName.textContent = workNameEl.textContent;
+      if (!aboutBtn || !aboutPanel) return;
 
-    markerEl.addEventListener('markerFound', () => {
-      statusEl.textContent = 'Маркер распознан';
-      titleEl?.classList.add('hidden');
-      showWorkName();
-    });
-    markerEl.addEventListener('markerLost', () => {
-      statusEl.textContent = 'Наведите камеру на маркер';
-      titleEl?.classList.remove('hidden');
-      hideWorkName();
-    });
-
-    aboutBtn?.addEventListener('click', () => {
-      const hidden = aboutPanel?.classList.contains('hidden');
-      if (hidden) openAbout(); else closeAbout();
-    });
-    aboutClose?.addEventListener('click', closeAbout);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAbout(); });
-
-    window.addEventListener('webglcontextlost', () => {
-      statusEl.textContent = 'Ошибка графики. Перезагрузите страницу.';
-    }, false);
-  </script>
-  <script>
-  function updateAboutPanelPosition() {
-    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-    const aboutBtn = document.getElementById('aboutBtn');
-    const aboutPanel = document.getElementById('aboutPanel');
-
-    if (!aboutBtn || !aboutPanel) return;
-
-    if (isLandscape) {
-      aboutBtn.style.top = '12px';
-      aboutBtn.style.left = '12px';
-      aboutPanel.style.top = '56px';
-      aboutPanel.style.left = '12px';
-    } else {
-      aboutBtn.style.top = '16px';
-      aboutBtn.style.left = '16px';
-      aboutPanel.style.top = '64px';
-      aboutPanel.style.left = '16px';
+      if (isLandscape) {
+        aboutBtn.style.top = '12px';
+        aboutBtn.style.left = '12px';
+        aboutPanel.style.top = '56px';
+        aboutPanel.style.left = '12px';
+      } else {
+        aboutBtn.style.top = '16px';
+        aboutBtn.style.left = '16px';
+        aboutPanel.style.top = '64px';
+        aboutPanel.style.left = '16px';
+      }
     }
-  }
+    window.addEventListener('orientationchange', updateAboutPanelPosition);
+    window.addEventListener('resize', updateAboutPanelPosition);
+    window.addEventListener('load', updateAboutPanelPosition);
+    function closeAbout() { aboutPanel?.classList.add('hidden'); }
+    
+    window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a-marker').forEach(marker => {
+      marker.addEventListener('markerFound', () => {
+        const name = marker.dataset.workName || '';
+        const author = marker.dataset.author || '';
+        const medium = marker.dataset.medium || '';
+        const coordinates = marker.dataset.coordinates || '';
+        
+        document.getElementById('workName').textContent = name;
+        document.getElementById('aboutWorkName').textContent = name;
+        document.querySelector('.about-content').innerHTML = `
+          <p><strong>nzvn</strong> ${name}</p>
+          <p><strong>kt</strong> ${author}</p>
+          <p><strong>md</strong> ${medium}</p>
+          <p><strong>crdnts</strong> ${coordinates}</p>
+        `;
 
-  window.addEventListener('orientationchange', updateAboutPanelPosition);
-  window.addEventListener('resize', updateAboutPanelPosition);
-  window.addEventListener('load', updateAboutPanelPosition);
-</script>
+        document.getElementById('workName')?.classList.remove('hidden');
+        document.getElementById('title')?.classList.add('hidden');
+        document.querySelector('.status').textContent = 'Маркер распознан';
+      });
+
+      marker.addEventListener('markerLost', () => {
+        document.getElementById('workName')?.classList.add('hidden');
+        document.getElementById('title')?.classList.remove('hidden');
+        document.querySelector('.status').textContent = 'Наведите камеру на маркер';
+        
+        aboutBtn?.addEventListener('click', () => {
+          const hidden = aboutPanel?.classList.contains('hidden');
+          if (hidden) openAbout(); else closeAbout();
+        });
+        
+        aboutClose?.addEventListener('click', closeAbout);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAbout(); });
+        window.addEventListener('webglcontextlost', () => {
+          statusEl.textContent = 'Ошибка графики. Перезагрузите страницу.';
+        }, false);
+  </script>
 </body>
 </html>
